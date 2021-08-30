@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-const dir = (true ? "/home/willfarhat/Desktop/Projects/personal-site-server" : "");
+const dir = (process.argv.length>2 ? process.argv[2] : __dirname);
 app.use(express.static(path.join(dir, 'build')));
 
 app.get('/', function (req, res) {
