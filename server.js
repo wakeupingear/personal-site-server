@@ -1,12 +1,37 @@
 const express = require('express');
+const basicAuth = require('express-basic-auth');
 const path = require('path');
-const app = express();
+const cors = require('cors');
 
-const dir = (process.argv.length>2 ? process.argv[2] : __dirname);
-app.use(express.static(path.join(dir, 'build')));
-
-app.get('/', function (req, res) {
-    res.sendFile(path.join(dir, 'build', 'index.html'));
+const publicIp = require('public-ip');
+let IPV4 = "POOP";
+publicIp.v4().then(ip => {
+    IPV4 = ip;
 });
 
-app.listen(80);
+const fs = require('fs');
+let password = "";
+fs.readFile(__dirname + '/password.txt', function (err, data) {
+    if (err) {
+        throw err;
+    }
+    password = data.toString();
+});
+
+const reactApp = express();
+const reactDir = (process.argv.length > 2 ? process.argv[2] : path.resolve("../personal-site-21/"));
+reactApp.use(express.static(path.join(reactDir, 'build')));
+reactApp.get('*', function (req, res) {
+    res.sendFile(reactDir + "/build/index.html");
+});
+reactApp.listen(80);
+
+const apiApp = express();
+apiApp.use(cors({
+    origin: '*'
+}));
+apiApp.get('/api/ip', function (req, res) {
+    res.send({data:IPV4});
+}
+);
+apiApp.listen(5000);
