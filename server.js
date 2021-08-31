@@ -10,12 +10,13 @@ publicIp.v4().then(ip => {
 });
 
 const fs = require('fs');
-let password = "";
+let auth="";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
     if (err) {
         throw err;
     }
-    password = data.toString();
+    let userPass="admin:"+data.toString();
+    auth=Buffer.from(userPass).toString("base64");
 });
 
 const reactApp = express();
@@ -30,6 +31,13 @@ const apiApp = express();
 apiApp.use(cors({
     origin: '*'
 }));
+apiApp.use((req, res, next) => {
+    if (auth!=req.headers.authorization) {
+        res.send({data:false});
+        return;
+    }
+    return next();
+});
 apiApp.get('/api/ip', function (req, res) {
     res.send({data:IPV4});
 }
