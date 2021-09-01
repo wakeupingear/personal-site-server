@@ -38,7 +38,7 @@ apiApp.use((req, res, next) => {
     }
     return next();
 });
-apiApp.get('/api/ip', function (req, res) {
+apiApp.get('/ip', function (req, res) {
     res.send({data:IPV4});
 }
 );
