@@ -1,4 +1,7 @@
 const express = require('express');
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const basicAuth = require('express-basic-auth');
 const path = require('path');
 const cors = require('cors');
@@ -10,7 +13,18 @@ publicIp.v4().then(ip => {
     IPV4 = ip;
 });
 
-const fs = require('fs');
+let options = {};
+let sitePort=443, apiPort=8443;
+try {
+    options.key = fs.readFileSync('./ssl/example.key');
+    options.cert = fs.readFileSync('./ssl/example.crt');
+}
+catch {
+    console.log("No SSL files found, falling back to HTTP");
+    sitePort=80;
+    apiPort=5000;
+}
+
 let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
     if (err) {
@@ -26,7 +40,7 @@ reactApp.use(express.static(path.join(reactDir, 'build')));
 reactApp.get('*', function (req, res) {
     res.sendFile(reactDir + "/build/index.html");
 });
-reactApp.listen(80);
+https.createServer(options, reactApp).listen(sitePort);
 
 const apiApp = express();
 apiApp.use(cors({
@@ -45,4 +59,4 @@ apiApp.get('/reset', function (req, res) {
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
 });
-apiApp.listen(5000);
+https.createServer(options, apiApp).listen(apiPort);
