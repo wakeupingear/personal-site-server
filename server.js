@@ -2,6 +2,7 @@ const express = require('express');
 const basicAuth = require('express-basic-auth');
 const path = require('path');
 const cors = require('cors');
+const { exec } = require('child_process');
 
 const publicIp = require('public-ip');
 let IPV4 = "POOP";
@@ -10,13 +11,13 @@ publicIp.v4().then(ip => {
 });
 
 const fs = require('fs');
-let auth="";
+let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
     if (err) {
         throw err;
     }
-    let userPass="admin:"+data.toString();
-    auth=Buffer.from(userPass).toString("base64");
+    let userPass = "admin:" + data.toString();
+    auth = Buffer.from(userPass).toString("base64");
 });
 
 const reactApp = express();
@@ -32,14 +33,16 @@ apiApp.use(cors({
     origin: '*'
 }));
 apiApp.use((req, res, next) => {
-    if (auth!=req.headers.authorization) {
-        res.send({data:false});
+    if (auth != req.headers.authorization) {
+        res.send({ data: false });
         return;
     }
     return next();
 });
+apiApp.get('/reset', function (req, res) {
+    exec('/home/pi/website_update.sh');
+});
 apiApp.get('/ip', function (req, res) {
-    res.send({data:IPV4});
-}
-);
+    res.send({ data: IPV4 });
+});
 apiApp.listen(5000);
