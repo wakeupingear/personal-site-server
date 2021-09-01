@@ -26,7 +26,7 @@ try {
 }
 catch {
     console.log("No SSL files found, falling back to HTTP");
-    //sitePort=80;
+    sitePort=80;
 }
 
 let auth = "";
@@ -34,8 +34,7 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
     if (err) {
         throw err;
     }
-    let userPass = "admin:" + data.toString();
-    auth = Buffer.from(userPass).toString("base64");
+    auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
 });
 
 const reactApp = express();
@@ -57,7 +56,8 @@ apiApp.use(cors({
     origin: '*'
 }));
 apiApp.use((req, res, next) => {
-    if (auth != req.headers.authorization) {
+const newAuth=((new Buffer(req.headers.authorization,"base64")).toString("ascii")).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
+if (auth != newAuth) {
         res.send({ data: false });
         return;
     }
