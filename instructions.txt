@@ -1,0 +1,4 @@
+To certify api.willfarhat.com:
+.Turn on cloudflare proxying
+.Run the server
+.Run 'sudo certbot renew'
