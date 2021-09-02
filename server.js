@@ -38,7 +38,7 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
     auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
 });
 
-const hostUsername=os.userInfo().username;
+const hostUsername = os.userInfo().username;
 const localTest = (hostUsername !== "pi" && hostUsername !== "root");
 if (!localTest) {
     const reactApp = express();
@@ -49,6 +49,12 @@ if (!localTest) {
     });
     reactApp.get('/.well-known/acme-challenge/OnvDPYbfbx_Ldu0JZVmYITFIBoPkDE5gdK7IoM8M0u8', function (req, res) {
         res.sendFile('/home/pi/personal-site-server/b-challenge');
+    });
+    reactApp.get('/outset', function (req, res) {
+        res.sendFile(reactDir+"/src/outset-site/")
+    });
+    reactApp.get('/coding', function (req, res) {
+        res.sendFile(reactDir+"/src/coding/")
     });
     reactApp.get('*', function (req, res) {
         res.sendFile(reactDir + "/build/index.html");
@@ -61,8 +67,8 @@ apiApp.use(cors({
     origin: '*'
 }));
 apiApp.use((req, res, next) => {
-    if (req.headers["user-agent"]!==undefined){
-        if ((req.headers["user-agent"]).includes("GitHub-Hookshot")){
+    if (req.headers["user-agent"] !== undefined) {
+        if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK");
             exec('/home/pi/website_update.sh');
             return;
