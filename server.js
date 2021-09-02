@@ -38,7 +38,8 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
     auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
 });
 
-let localTest = (os.userInfo().username !== "pi");
+const hostUsername=os.userInfo().username;
+const localTest = (hostUsername !== "pi" && hostUsername !== "root");
 if (!localTest) {
     const reactApp = express();
     const reactDir = (process.argv.length > 2 ? process.argv[2] : path.resolve("../personal-site-21/"));
@@ -60,7 +61,13 @@ apiApp.use(cors({
     origin: '*'
 }));
 apiApp.use((req, res, next) => {
-    console.log(req);
+    if (req.headers["user-agent"]!==undefined){
+        if ((req.headers["user-agent"]).includes("GitHub-Hookshot")){
+            res.send("OK");
+            exec('/home/pi/website_update.sh');
+            return;
+        }
+    }
     let newAuth = "";
     if (req.headers.authorization !== undefined) newAuth = ((Buffer.from(req.headers.authorization, "base64")).toString("ascii")).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
     if (auth != newAuth) {
@@ -68,9 +75,6 @@ apiApp.use((req, res, next) => {
         return;
     }
     return next();
-});
-apiApp.get('/reset', function (req, res) {
-    exec('/home/pi/website_update.sh');
 });
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
