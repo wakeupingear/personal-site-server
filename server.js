@@ -40,9 +40,9 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
 
 const hostUsername = os.userInfo().username;
 const localTest = (hostUsername !== "pi" && hostUsername !== "root");
+const reactDir = (process.argv.length > 2 ? process.argv[2] : path.resolve("../personal-site-21/"));
 if (!localTest) {
     const reactApp = express();
-    const reactDir = (process.argv.length > 2 ? process.argv[2] : path.resolve("../personal-site-21/"));
     reactApp.use(express.static(path.join(reactDir, 'build')));
     reactApp.get('/.well-known/acme-challenge/9dQPhqJkntU8ttUeIL6EOM2w8gF2gPnArJtXnmzMvrw', function (req, res) {
         res.sendFile('/home/pi/personal-site-server/a-challenge');
@@ -66,6 +66,15 @@ const apiApp = express();
 apiApp.use(cors({
     origin: '*'
 }));
+apiApp.get('/html5game*',function(req,res){
+    res.sendFile(reactDir+"/public/personal-site-game/build"+req.path);
+});
+apiApp.get('/favicon.ico',function(req,res){
+    res.sendFile(reactDir+"/public/personal-site-game/build/favicon.ico");
+});
+apiApp.get('/game',function(req,res){
+    res.sendFile(reactDir+"/public/personal-site-game/build/index.html");
+});
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
