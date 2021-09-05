@@ -70,7 +70,7 @@ apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK");
-            exec('/home/pi/website_update.sh');
+            exec('sudo /home/pi/website_update.sh');
             return;
         }
     }
