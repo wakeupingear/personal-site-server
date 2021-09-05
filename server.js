@@ -5,7 +5,7 @@ const https = require('https');
 const basicAuth = require('express-basic-auth');
 const path = require('path');
 const cors = require('cors');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const os = require('os');
 
 const publicIp = require('public-ip');
@@ -69,8 +69,14 @@ apiApp.use(cors({
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
-            res.send("OK");
-            exec('sudo /home/pi/website_update.sh');
+            res.send("OK buddy <3");
+	    const out = fs.openSync('/home/pi/out.log', 'a');
+            const ls=spawn('bash', ['/home/pi/website_update.sh', '>', '/home/pi/log.out'],{
+	        detached: true,
+		stdio: ['ignore', out, out]
+	    });
+	    ls.unref();
+	    process.exit(0);
             return;
         }
     }
