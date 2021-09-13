@@ -1,6 +1,6 @@
 const express = require('express');
+const fileupload = require("express-fileupload");
 const fs = require('fs');
-const http = require('http');
 const https = require('https');
 const basicAuth = require('express-basic-auth');
 const path = require('path');
@@ -51,10 +51,10 @@ if (!localTest) {
         res.sendFile('/home/pi/personal-site-server/b-challenge');
     });
     reactApp.get('/outset', function (req, res) {
-        res.sendFile(reactDir+"/src/outset-site/")
+        res.sendFile(reactDir + "/src/outset-site/")
     });
     reactApp.get('/coding', function (req, res) {
-        res.sendFile(reactDir+"/src/coding/")
+        res.sendFile(reactDir + "/src/coding/")
     });
     reactApp.get('*', function (req, res) {
         res.sendFile(reactDir + "/build/index.html");
@@ -66,26 +66,27 @@ const apiApp = express();
 apiApp.use(cors({
     origin: '*'
 }));
-apiApp.get('/html5game*',function(req,res){
-    res.sendFile(reactDir+"/public/personal-site-game/build"+req.path);
+apiApp.use(fileupload());
+apiApp.get('/html5game*', function (req, res) {
+    res.sendFile(reactDir + "/public/personal-site-game/build" + req.path);
 });
-apiApp.get('/favicon.ico',function(req,res){
-    res.sendFile(reactDir+"/public/personal-site-game/build/favicon.ico");
+apiApp.get('/favicon.ico', function (req, res) {
+    res.sendFile(reactDir + "/public/personal-site-game/build/favicon.ico");
 });
-apiApp.get('/game',function(req,res){
-    res.sendFile(reactDir+"/public/personal-site-game/build/index.html");
+apiApp.get('/game', function (req, res) {
+    res.sendFile(reactDir + "/public/personal-site-game/build/index.html");
 });
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
-	    const out = fs.openSync('/home/pi/out.log', 'a');
-            const ls=spawn('bash', ['/home/pi/website_update.sh', '>', '/home/pi/log.out'],{
-	        detached: true,
-		stdio: ['ignore', out, out]
-	    });
-	    ls.unref();
-	    process.exit(0);
+            const out = fs.openSync('/home/pi/out.log', 'a');
+            const ls = spawn('bash', ['/home/pi/website_update.sh', '>', '/home/pi/log.out'], {
+                detached: true,
+                stdio: ['ignore', out, out]
+            });
+            ls.unref();
+            process.exit(0);
             return;
         }
     }
@@ -100,5 +101,12 @@ apiApp.use((req, res, next) => {
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
 });
+apiApp.get('/art', function (req, res) {
+    res.send({ data: fs.readdirSync(reactDir + "/public/personal-site-game/build/art") });
+});
+apiApp.post('/art', (req, res) => {
+    const files=req.files;
+    res.send(files)
+  })
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
