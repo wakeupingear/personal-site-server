@@ -3,15 +3,22 @@ const fileupload = require("express-fileupload");
 const fs = require('fs');
 const https = require('https');
 const basicAuth = require('express-basic-auth');
+const schedule = require('node-schedule');
 const path = require('path');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const os = require('os');
 
 const publicIp = require('public-ip');
+const { exit } = require('process');
 let IPV4 = "POOP";
 publicIp.v4().then(ip => {
     IPV4 = ip;
+});
+
+const job = schedule.scheduleJob('* * 3 * * *', function(){
+    console.log("Restarting...");
+    process.exit(0);
 });
 
 let siteOptions = {}, apiOptions = {};
@@ -29,6 +36,17 @@ catch {
     console.log("No SSL files found, falling back to HTTP");
     sitePort = 80;
 }
+
+const dayPath = path.resolve("./archive/" + new Date().toISOString().substring(0, 10));
+try {
+    if (!fs.existsSync(dayPath)) {
+        fs.mkdirSync(dayPath)
+    }
+} catch (err) {
+    console.error(err)
+}
+
+
 
 let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
@@ -76,6 +94,18 @@ apiApp.get('/favicon.ico', function (req, res) {
 apiApp.get('/game', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build/index.html");
 });
+
+let artPath="";
+apiApp.get('/archive/*', function (req, res) {
+    const filePath=path.resolve("./"+req.path);
+    res.sendFile(filePath);
+});
+apiApp.get('/art', function (req, res) {
+    if (artPath==="") res.status(404).send({ data: false});
+    else {
+        res.send({data: artPath});
+    }
+});
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
@@ -101,12 +131,25 @@ apiApp.use((req, res, next) => {
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
 });
-apiApp.get('/art', function (req, res) {
-    res.send({ data: fs.readdirSync(reactDir + "/public/personal-site-game/build/art") });
-});
-apiApp.post('/art', (req, res) => {
-    const files=req.files;
-    res.send(files)
-  })
+
+apiApp.post('/upload*', (req, res) => {
+    if (!req.files) {
+        return res.status(500).send({ msg: "No file attached" })
+    }
+    // accessing the file
+    const myFile = req.files.file;
+    //  mv() method places the file inside public directory
+    let filePath=dayPath + "/" + myFile.name;
+    filePath=filePath.substring(filePath.indexOf("archive/"));
+    if (req.path.includes("/art")) artPath=filePath;
+    myFile.mv(filePath, function (err) {
+        if (err) {
+            console.log(err)
+            return res.status(500).send({ msg: "Error occured" });
+        }
+        // returing the response with file path and name
+        return res.send({ name: myFile.name, path: filePath });
+    });
+})
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
