@@ -16,10 +16,14 @@ publicIp.v4().then(ip => {
     IPV4 = ip;
 });
 
-const job = schedule.scheduleJob('* * 3 * * *', function(){
-    console.log("Restarting...");
-    process.exit(0);
-});
+const hostUsername = os.userInfo().username;
+const localTest = (hostUsername !== "pi" && hostUsername !== "root");
+if (!localTest) {
+    const job = schedule.scheduleJob('0 0 3 * * *', function () {
+        console.log("Restarting...");
+        process.exit(0);
+    });
+}
 
 let siteOptions = {}, apiOptions = {};
 let sitePort = 443, apiPort = 5000;
@@ -34,19 +38,23 @@ try {
 }
 catch {
     console.log("No SSL files found, falling back to HTTP");
-    sitePort = 80;
+    if (localTest) sitePort = 2000;
+    else sitePort = 80;
 }
 
-const dayPath = path.resolve("./archive/" + new Date().toISOString().substring(0, 10));
+let dayPath = path.resolve("./archive/");
 try {
     if (!fs.existsSync(dayPath)) {
-        fs.mkdirSync(dayPath)
+        fs.mkdirSync(dayPath);
+    }
+    dayPath += "/" + new Date().toISOString().substring(0, 10);
+    dayPath = path.resolve(dayPath);
+    if (!fs.existsSync(dayPath)) {
+        fs.mkdirSync(dayPath);
     }
 } catch (err) {
-    console.error(err)
+    console.error(err);
 }
-
-
 
 let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
@@ -56,29 +64,46 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
     auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
 });
 
-const hostUsername = os.userInfo().username;
-const localTest = (hostUsername !== "pi" && hostUsername !== "root");
-const reactDir = (process.argv.length > 2 ? process.argv[2] : path.resolve("../personal-site-21/"));
-if (!localTest) {
-    const reactApp = express();
-    reactApp.use(express.static(path.join(reactDir, 'build')));
-    reactApp.get('/.well-known/acme-challenge/9dQPhqJkntU8ttUeIL6EOM2w8gF2gPnArJtXnmzMvrw', function (req, res) {
-        res.sendFile('/home/pi/personal-site-server/a-challenge');
-    });
-    reactApp.get('/.well-known/acme-challenge/OnvDPYbfbx_Ldu0JZVmYITFIBoPkDE5gdK7IoM8M0u8', function (req, res) {
-        res.sendFile('/home/pi/personal-site-server/b-challenge');
-    });
-    reactApp.get('/outset', function (req, res) {
-        res.sendFile(reactDir + "/src/outset-site/")
-    });
-    reactApp.get('/coding', function (req, res) {
-        res.sendFile(reactDir + "/src/coding/")
-    });
-    reactApp.get('*', function (req, res) {
-        res.sendFile(reactDir + "/build/index.html");
-    });
-    https.createServer(siteOptions, reactApp).listen(sitePort);
+let reactDir = process.argv[2];
+if (process.argv.length < 3) {
+    reactDir = path.resolve("../personal-site-21");
 }
+console.log("Using react dir: " + reactDir);
+
+const reactApp = express();
+reactApp.use(express.static(reactDir));
+reactApp.set('view engine', 'jade');
+reactApp.get('/.well-known/acme-challenge/9dQPhqJkntU8ttUeIL6EOM2w8gF2gPnArJtXnmzMvrw', function (req, res) {
+    res.sendFile('/home/pi/personal-site-server/a-challenge');
+});
+reactApp.get('/.well-known/acme-challenge/OnvDPYbfbx_Ldu0JZVmYITFIBoPkDE5gdK7IoM8M0u8', function (req, res) {
+    res.sendFile('/home/pi/personal-site-server/b-challenge');
+});
+reactApp.get('/files/*', function (req, res) {
+    const filePath = path.resolve(reactDir + "/public/" + req.path);
+    if (!fs.existsSync(filePath)) {
+        res.status(404).send("File not found");
+    }
+    else res.sendFile(filePath);
+});
+reactApp.get('/outset', function (req, res) {
+    res.sendFile(reactDir + "/src/outset-site/");
+});
+reactApp.get('/coding', function (req, res) {
+    res.sendFile(reactDir + "/src/coding/");
+});
+reactApp.get('*', function (req, res) {
+    const endpoint = req.path.replace(/%20/g, " ");
+    if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
+    else if (endpoint.indexOf("/files") === 0) {
+        res.sendFile(path.resolve(reactDir + "/build" + endpoint));
+    }
+    else if (fs.existsSync(reactDir + "/build" + endpoint)) res.sendFile(reactDir + "/build" + endpoint);
+    else res.sendFile(reactDir + "/build/index.html");
+});
+if (!localTest) https.createServer(siteOptions, apiApp).listen(sitePort);
+else reactApp.listen(sitePort);
+console.log("React app listening on port " + sitePort);
 
 const apiApp = express();
 apiApp.use(cors({
@@ -95,15 +120,15 @@ apiApp.get('/game', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build/index.html");
 });
 
-let artPath="";
+let artPath = "";
 apiApp.get('/archive/*', function (req, res) {
-    const filePath=path.resolve("./"+req.path);
+    const filePath = path.resolve("./" + req.path);
     res.sendFile(filePath);
 });
 apiApp.get('/art', function (req, res) {
-    if (artPath==="") res.status(404).send({ data: false});
+    if (artPath === "") res.status(404).send({ data: false });
     else {
-        res.send({data: artPath});
+        res.send({ data: artPath });
     }
 });
 apiApp.use((req, res, next) => {
@@ -136,20 +161,21 @@ apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
         return res.status(500).send({ msg: "No file attached" })
     }
-    // accessing the file
     const myFile = req.files.file;
-    //  mv() method places the file inside public directory
-    let filePath=dayPath + "/" + myFile.name;
-    filePath=filePath.substring(filePath.indexOf("archive/"));
-    if (req.path.includes("/art")) artPath=filePath;
+    let filePath = path.resolve(reactDir + (req.path.replace("/upload/files", "")) + "/public/files/" + myFile.name);
+    if (req.path.includes("upload/art")) {
+        filePath = dayPath+"/"+myFile.name;
+        artPath = filePath.substring(filePath.indexOf("archive"));
+    }
+    console.log("Uploading file: " + filePath);
     myFile.mv(filePath, function (err) {
         if (err) {
             console.log(err)
             return res.status(500).send({ msg: "Error occured" });
         }
-        // returing the response with file path and name
         return res.send({ name: myFile.name, path: filePath });
     });
 })
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
+console.log("API app listening on port " + apiPort);

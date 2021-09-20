@@ -4,6 +4,8 @@
     "express": "^4.17.1",
     "express-basic-auth": "^1.2.0",
     "express-fileupload": "^1.2.1",
+    "express-title": "^0.1.0",
+    "jade": "^1.11.0",
     "node-schedule": "^2.0.0",
     "nodemon": "^2.0.12",
     "path": "^0.12.7",
