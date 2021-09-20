@@ -125,6 +125,11 @@ apiApp.get('/archive/*', function (req, res) {
     const filePath = path.resolve("./" + req.path);
     res.sendFile(filePath);
 });
+apiApp.get('/fileList', function (req, res) {
+    const fileDir = path.resolve(reactDir + "/public/files/")
+    const fileList = fs.readdirSync(fileDir);
+    res.send({data: fileList});
+});
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
     else {
@@ -142,7 +147,6 @@ apiApp.use((req, res, next) => {
             });
             ls.unref();
             process.exit(0);
-            return;
         }
     }
     let newAuth = "";
@@ -164,7 +168,7 @@ apiApp.post('/upload*', (req, res) => {
     const myFile = req.files.file;
     let filePath = path.resolve(reactDir + (req.path.replace("/upload/files", "")) + "/public/files/" + myFile.name);
     if (req.path.includes("upload/art")) {
-        filePath = dayPath+"/"+myFile.name;
+        filePath = dayPath + "/" + myFile.name;
         artPath = filePath.substring(filePath.indexOf("archive"));
     }
     console.log("Uploading file: " + filePath);
