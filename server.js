@@ -101,7 +101,7 @@ reactApp.get('*', function (req, res) {
     else if (fs.existsSync(reactDir + "/build" + endpoint)) res.sendFile(reactDir + "/build" + endpoint);
     else res.sendFile(reactDir + "/build/index.html");
 });
-if (!localTest) https.createServer(siteOptions, apiApp).listen(sitePort);
+if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
