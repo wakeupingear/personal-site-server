@@ -177,7 +177,9 @@ apiApp.post('/upload*', (req, res) => {
             console.log(err)
             return res.status(500).send({ msg: "Error occured" });
         }
-        return res.send({ name: myFile.name, path: filePath });
+        else {
+            return res.status(200).send({data: myFile.name});
+        }
     });
 })
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
