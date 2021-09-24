@@ -86,13 +86,17 @@ reactApp.get('/files/*', function (req, res) {
     }
     else res.sendFile(filePath);
 });
-reactApp.get('/outset', function (req, res) {
-    res.sendFile(reactDir + "/src/outset-site/");
-});
+/*reactApp.get('/outset*', function (req, res) {
+    let endFile = req.path.substring(req.path.indexOf("/outset") + 7);
+    if (endFile==="") endFile="index.html";
+    console.log(endFile)
+    res.sendFile(path.resolve(reactDir + "/src/outset-site/"+endFile));
+});*/
 reactApp.get('/coding', function (req, res) {
     res.sendFile(reactDir + "/src/coding/");
 });
 reactApp.get('*', function (req, res) {
+    console.log(req.path)
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
     else if (endpoint.indexOf("/files") === 0) {
