@@ -145,7 +145,7 @@ apiApp.use((req, res, next) => {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
             const out = fs.openSync('/home/pi/out.log', 'a');
-            const ls = spawn('bash', ['/home/pi/website_update.sh', '>', '/home/pi/log.out'], {
+            const ls = spawn('bash', ['/home/pi/personal-site-sever/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true,
                 stdio: ['ignore', out, out]
             });
