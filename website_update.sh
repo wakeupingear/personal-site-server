@@ -6,19 +6,14 @@ echo "Pulling latest game build..."
 sudo git pull
 echo "Checking Github..."
 cd /home/pi/personal-site-21
-git fetch origin
-reslog=$(git log HEAD..origin/main --oneline)
-if [[ "${reslog}" != "hi" ]] ; then
-	echo "Changes found in site. Pulling..."
-	sudo git stash
-	sudo git pull
-	echo "Installing npm packages..."
-	sudo npm i
-	echo "Building site..."
-	sudo npm run build
-else
-	echo "Site up to date"
-fi
+echo "Pulling site changes..."
+sudo git stash
+sudo git pull
+echo "Installing npm packages..."
+sudo npm i
+echo "Building site..."
+sudo npm run build
+echo "Site up to date"
 
 cd /home/pi/personal-site-server
 git fetch origin
