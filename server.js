@@ -87,10 +87,14 @@ reactApp.get('/files/*', function (req, res) {
     else res.sendFile(filePath);
 });
 reactApp.get('/outset*', function (req, res) {
-    let endFile = req.path.substring(req.path.indexOf("/outset") + 7);
-    if (endFile==="") endFile="index.html";
-    console.log(endFile)
-    res.sendFile(path.resolve(reactDir + "/src/assets/outsetPage/"+endFile));
+    if (req.path == "/outset" || req.path == "/outset/" || req.path == "/outset/index.html") {
+        res.sendFile(reactDir + "/build/index.html");
+    }
+    else {
+        let endFile = req.path.substring(req.path.indexOf("/outset") + 7);
+        if (endFile === "") endFile = "index.html";
+        res.sendFile(path.resolve(reactDir + "/src/assets/outsetPage/" + endFile));
+    }
 });
 reactApp.get('/coding', function (req, res) {
     res.sendFile(reactDir + "/src/coding/");
@@ -132,7 +136,7 @@ apiApp.get('/archive/*', function (req, res) {
 apiApp.get('/fileList', function (req, res) {
     const fileDir = path.resolve(reactDir + "/public/files/")
     const fileList = fs.readdirSync(fileDir);
-    res.send({data: fileList});
+    res.send({ data: fileList });
 });
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
@@ -180,7 +184,7 @@ apiApp.post('/upload*', (req, res) => {
             return res.status(500).send({ msg: "Error occured" });
         }
         else {
-            return res.status(200).send({data: myFile.name});
+            return res.status(200).send({ data: myFile.name });
         }
     });
 })
