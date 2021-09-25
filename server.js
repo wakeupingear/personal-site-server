@@ -148,7 +148,7 @@ apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
-            const ls = spawn('bash', ['/home/pi/personal-site-sever/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+            const ls = spawn('bash', ['/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true
             });
             ls.unref();
