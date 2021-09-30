@@ -99,8 +99,11 @@ reactApp.get('/outset*', function (req, res) {
 reactApp.get('/coding', function (req, res) {
     res.sendFile(reactDir + "/src/coding/");
 });
+reactApp.get('/coding*', function (req, res) {
+    let file=reactDir + "/src/coding/"+req.path.substring(req.path.indexOf("/coding")+7);
+    res.sendFile(file);
+});
 reactApp.get('*', function (req, res) {
-    console.log(req.path)
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
     else if (endpoint.indexOf("/files") === 0) {
