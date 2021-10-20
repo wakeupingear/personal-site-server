@@ -18,12 +18,6 @@ publicIp.v4().then(ip => {
 
 const hostUsername = os.userInfo().username;
 const localTest = (hostUsername !== "pi" && hostUsername !== "root");
-if (!localTest) {
-    const job = schedule.scheduleJob('0 0 3 * * *', function () {
-        console.log("Restarting...");
-        process.exit(0);
-    });
-}
 
 let siteOptions = {}, apiOptions = {};
 let sitePort = 443, apiPort = 5000;
@@ -56,6 +50,43 @@ try {
     console.error(err);
 }
 
+//claps
+let claps = 0;
+let clapPath = path.resolve("./claps.txt");
+if (!fs.existsSync(clapPath)) {
+    fs.writeFile(clapPath, "0", function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        console.log("New clap file created");
+    });
+}
+fs.readFile(clapPath, function (err, data) {
+    if (err) {
+        console.log("Error reading claps");
+        return;
+    }
+    claps=Number(data.toString());
+});
+
+//save
+const save=function(){
+    fs.writeFile(clapPath, claps, function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        console.log("Saved claps");
+    });
+}
+if (!localTest) {
+    const job = schedule.scheduleJob('0 0 3 * * *', function () {
+        save();
+        console.log("Restarting...");
+        process.exit(0);
+    });
+}
+
+//password
 let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
     if (err) {
@@ -100,7 +131,7 @@ reactApp.get('/coding', function (req, res) {
     res.sendFile(reactDir + "/src/coding/");
 });
 reactApp.get('/coding*', function (req, res) {
-    let file=reactDir + "/src/coding/"+req.path.substring(req.path.indexOf("/coding")+7);
+    let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
 });
 reactApp.get('*', function (req, res) {
@@ -141,6 +172,13 @@ apiApp.get('/fileList', function (req, res) {
     const fileList = fs.readdirSync(fileDir);
     res.send({ data: fileList });
 });
+apiApp.get('/clap', function (req, res) {
+    res.send({ data: claps });
+});
+apiApp.get('/newClap', function (req, res) {;
+    claps++;
+    res.status(200).send({data:claps});
+});
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
     else {
@@ -151,6 +189,10 @@ apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
+
+            //save data
+            save();
+
             const ls = spawn('bash', ['/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true
             });
