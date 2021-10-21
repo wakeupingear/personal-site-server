@@ -53,6 +53,7 @@ try {
 //claps
 let claps = 0;
 let clapPath = path.resolve("./claps.txt");
+if (!localTest) clapPath = path.resolve("/home/pi/personal-site-server/claps.txt");
 if (!fs.existsSync(clapPath)) {
     fs.writeFile(clapPath, "0", function (err) {
         if (err) {
