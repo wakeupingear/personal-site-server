@@ -96,6 +96,15 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
     auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
 });
 
+//GH token
+let github="";
+fs.readFile(__dirname + '/github.txt', function (err, data) {
+    if (err) {
+        throw err;
+    }
+    github=data.toString();
+});
+
 let reactDir = process.argv[2];
 if (process.argv.length < 3) {
     reactDir = path.resolve("../personal-site-21");
@@ -211,6 +220,9 @@ apiApp.use((req, res, next) => {
 });
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
+});
+apiApp.get('/github', function (req, res) {
+    res.send({ data: github });
 });
 
 apiApp.post('/upload*', (req, res) => {

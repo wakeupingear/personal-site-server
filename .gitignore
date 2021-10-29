@@ -24,5 +24,6 @@ yarn-debug.log*
 yarn-error.log*
 
 password.txt
+github.txt
 claps.txt
 out.log
