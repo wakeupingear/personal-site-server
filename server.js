@@ -194,7 +194,7 @@ apiApp.use((req, res, next) => {
             //save data
             save();
 
-            const ls = spawn('bash', ['/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+            const ls = spawn('bash', ['sudo','/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true
             });
             ls.unref();
