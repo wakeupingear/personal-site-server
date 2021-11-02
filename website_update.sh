@@ -1,11 +1,10 @@
+now=$(date +"%T")
+echo "Current time : $now"
 echo "Stopping forever tasks..."
 sudo forever stopall
 sudo killall node
 cd /home/pi/personal-site-21/public/personal-site-game
 echo "Pulling latest game build..."
-sudo git pull
-cd /home/pi/personal-site-21/public/personal-site-21/src/coding
-echo "Pulling latest coding site build..."
 sudo git pull
 echo "Checking Github..."
 cd /home/pi/personal-site-21
