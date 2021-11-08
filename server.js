@@ -87,6 +87,10 @@ if (!localTest) {
     });
 }
 
+const memProfile = schedule.scheduleJob('*/10 * * * *', function () {
+    console.log("Memory usage: " + process.memoryUsage().heapUsed / 1024 / 1024 + "MB");
+});
+
 //password
 let auth = "";
 fs.readFile(__dirname + '/password.txt', function (err, data) {
