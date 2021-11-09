@@ -67,16 +67,17 @@ fs.readFile(clapPath, function (err, data) {
         console.log("Error reading claps");
         return;
     }
-    claps=Number(data.toString());
+    claps = Number(data.toString());
 });
 
 //save
-const save=function(){
+const save = function (thenFunc) {
     fs.writeFile(clapPath, claps, function (err) {
         if (err) {
             return console.log(err);
         }
         console.log("Saved claps");
+        if (thenFunc !== undefined) thenFunc();
     });
 }
 if (!localTest) {
@@ -101,12 +102,12 @@ fs.readFile(__dirname + '/password.txt', function (err, data) {
 });
 
 //GH token
-let github="";
+let github = "";
 fs.readFile(__dirname + '/github.txt', function (err, data) {
     if (err) {
         throw err;
     }
-    github=data.toString();
+    github = data.toString();
 });
 
 let reactDir = process.argv[2];
@@ -189,9 +190,10 @@ apiApp.get('/fileList', function (req, res) {
 apiApp.get('/clap', function (req, res) {
     res.send({ data: claps });
 });
-apiApp.get('/newClap', function (req, res) {;
+apiApp.get('/newClap', function (req, res) {
+    ;
     claps++;
-    res.status(200).send({data:claps});
+    res.status(200).send({ data: claps });
 });
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
@@ -204,14 +206,15 @@ apiApp.use((req, res, next) => {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
 
-            //save data
-            save();
-	    console.log("Reloading build...");
-	    const ls = spawn('bash', ['sudo','/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
-                detached: true
+            save(function () {
+                console.log("Reloading build...");
+                const ls = spawn('bash', ['sudo', '/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+                    detached: true
+                });
+                ls.unref();
+                exit(0);
             });
-            ls.unref();
-	    return;
+            return;
         }
     }
     let newAuth = "";
