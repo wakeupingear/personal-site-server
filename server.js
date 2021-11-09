@@ -206,12 +206,12 @@ apiApp.use((req, res, next) => {
 
             //save data
             save();
-
-            const ls = spawn('bash', ['sudo','/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+	    console.log("Reloading build...");
+	    const ls = spawn('bash', ['sudo','/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true
             });
             ls.unref();
-            process.exit(0);
+	    return;
         }
     }
     let newAuth = "";
