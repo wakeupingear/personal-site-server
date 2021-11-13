@@ -207,7 +207,6 @@ apiApp.get('/art', function (req, res) {
 let emotion=0;
 apiApp.post('/emotion', function (req, res) {
     emotion=req.body;
-    console.log(emotion);
     res.send("Ok");
 });
 apiApp.get('/emotion',function(req,res){
