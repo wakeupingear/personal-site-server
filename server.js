@@ -162,7 +162,9 @@ if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
+
 const apiApp = express();
+apiApp.use(express.urlencoded({ extended: true }))
 apiApp.use(cors({
     origin: '*'
 }));
@@ -201,6 +203,17 @@ apiApp.get('/art', function (req, res) {
         res.send({ data: artPath });
     }
 });
+
+let emotion=0;
+apiApp.post('/emotion', function (req, res) {
+    emotion=req.body;
+    console.log(emotion);
+    res.send("Ok");
+});
+apiApp.get('/emotion',function(req,res){
+    res.send({data:emotion});
+});
+
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
