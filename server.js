@@ -114,7 +114,7 @@ if (process.argv.length < 3) {
     reactDir = path.resolve("../personal-site-21");
 }
 console.log("Using react dir: " + reactDir);
-let emotiveDir="/home/pi/emotive";
+let emotiveDir = "/home/pi/emotive";
 
 const reactApp = express();
 reactApp.use(express.static(reactDir));
@@ -148,15 +148,6 @@ reactApp.get('/coding', function (req, res) {
 reactApp.get('/coding*', function (req, res) {
     let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
-});
-reactApp.get('/emotive*', function (req, res) {
-    const endpoint = req.path.replace(/%20/g, " ");
-    if (endpoint === "/files") res.sendFile(emotiveDir + "/frontend/build/index.html");
-    else if (endpoint.indexOf("/files") === 0) {
-        res.sendFile(path.resolve(emotiveDir + "/frontend/build" + endpoint));
-    }
-    else if (fs.existsSync(emotiveDir + "/frontend/build" + endpoint)) res.sendFile(emotiveDir + "/frontend/build" + endpoint);
-    else res.sendFile(emotiveDir + "/frontend/build/index.html");
 });
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
@@ -265,17 +256,34 @@ if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
 console.log("API app listening on port " + apiPort);
 
-const emotiveApp=express();
+
+//Emotive
+const emotiveApp = express();
 emotiveApp.use(cors({
     origin: '*'
 }));
-emotiveApp.set('port', 9000);
-emotiveApp.get('*', (req, res) => {
+emotiveApp.set('port', 8000);
+emotiveApp.get('*', function (req, res) {
+    const endpoint = req.path.replace(/%20/g, " ");
+    if (endpoint === "/files") res.sendFile(emotiveDir + "/frontend/build/index.html");
+    else if (endpoint.indexOf("/files") === 0) {
+        res.sendFile(path.resolve(emotiveDir + "/frontend/build" + endpoint));
+    }
+    else if (fs.existsSync(emotiveDir + "/frontend/build" + endpoint)) res.sendFile(emotiveDir + "/frontend/build" + endpoint);
+    else res.sendFile(emotiveDir + "/frontend/build/index.html");
+});
+emotiveApp.listen(emotivePort);
+
+const emotiveApi = express();
+emotiveApi.use(cors({
+    origin: '*'
+}));
+emotiveApi.set('port', 8000);
+emotiveApi.get('*', (req, res) => {
     //send the file in ../frontend/build/
     let trim = req.path.replace('/game', '').trim();
     if (trim === "") trim += "/index.html";
-    res.sendFile(path.resolve(emotiveDir+'/emotive-game/build/' + trim));
+    res.sendFile(path.resolve(emotiveDir + '/emotive-game/build/' + trim));
 });
-if (!localTest&&false) https.createServer(apiOptions, emotiveApp).listen(emotiveApp.get('port'));
-else emotiveApp.listen(emotiveApp.get('port'));
-console.log("EMOTIVE app listening on port " + emotiveApp.get('port'));
+emotiveApi.listen(emotiveApi.get('port'));
+console.log("EMOTIVE listening on ports " + emotiveApp.get('port') + " and " + emotiveApi.get('port'));
