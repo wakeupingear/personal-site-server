@@ -71,13 +71,12 @@ fs.readFile(clapPath, function (err, data) {
 });
 
 //save
-const save = function (thenFunc) {
+const save = function () {
     fs.writeFile(clapPath, claps, function (err) {
         if (err) {
             return console.log(err);
         }
         console.log("Saved claps");
-        if (thenFunc !== undefined) thenFunc();
     });
 }
 if (!localTest) {
@@ -115,8 +114,7 @@ if (process.argv.length < 3) {
     reactDir = path.resolve("../personal-site-21");
 }
 console.log("Using react dir: " + reactDir);
-
-let emotivePath=path.resolve("/home/pi/emotive");
+let emotiveDir="/home/pi/emotive";
 
 const reactApp = express();
 reactApp.use(express.static(reactDir));
@@ -153,12 +151,12 @@ reactApp.get('/coding*', function (req, res) {
 });
 reactApp.get('/emotive*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
-    if (endpoint === "/files") res.sendFile(emotivePath + "/emotive-game/build/index.html");
+    if (endpoint === "/files") res.sendFile(emotiveDir + "/build/index.html");
     else if (endpoint.indexOf("/files") === 0) {
-        res.sendFile(path.resolve(emotivePath + "/emotive-game/build" + endpoint));
+        res.sendFile(path.resolve(emotiveDir + "/build" + endpoint));
     }
-    else if (fs.existsSync(emotivePath + "/build" + endpoint)) res.sendFile(emotivePath + "/emotive-game/build" + endpoint);
-    else res.sendFile(emotivePath + "/emotive-game/build/index.html");
+    else if (fs.existsSync(emotiveDir + "/build" + endpoint)) res.sendFile(emotiveDir + "/build" + endpoint);
+    else res.sendFile(emotiveDir + "/build/index.html");
 });
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
@@ -173,9 +171,7 @@ if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
-
 const apiApp = express();
-apiApp.use(express.urlencoded({ extended: true }))
 apiApp.use(cors({
     origin: '*'
 }));
@@ -214,39 +210,19 @@ apiApp.get('/art', function (req, res) {
         res.send({ data: artPath });
     }
 });
-
-let emotion=0;
-apiApp.post('/emotive', function (req, res) {
-    emotion=req.body;
-    res.send("Ok");
-});
-apiApp.get('/emotive',function(req,res){
-    res.send({data:emotion});
-});
-apiApp.get('/emotiveGame/html5game*', function (req, res) {
-    res.sendFile(emotivePath + "/emotive-game/build/html5game" + req.path);
-});
-apiApp.get('/emotiveGame/favicon.ico', function (req, res) {
-    res.sendFile(emotivePath + "/emotive-game/build/favicon.ico");
-});
-apiApp.get('/emotiveGame', function (req, res) {
-    res.sendFile(emotivePath + "/emotive-game/build/index.html");
-});
-
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
 
-            save(function () {
-                console.log("Reloading build...");
-                const ls = spawn('bash', ['sudo', '/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
-                    detached: true
-                });
-                ls.unref();
-                exit(0);
+            //save data
+            save();
+
+            const ls = spawn('bash', ['sudo', '/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+                detached: true
             });
-            return;
+            ls.unref();
+            process.exit(0);
         }
     }
     let newAuth = "";
@@ -288,3 +264,18 @@ apiApp.post('/upload*', (req, res) => {
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
 console.log("API app listening on port " + apiPort);
+
+const emotiveApp=express();
+emotiveApp.use(cors({
+    origin: '*'
+}));
+emotiveApp.set('port', 9000);
+emotiveApp.get('*', (req, res) => {
+    //send the file in ../frontend/build/
+    let trim = req.path.replace('/game', '').trim();
+    if (trim === "") trim += "/index.html";
+    res.sendFile(path.resolve(emotiveDir+'/emotive-game/builds/' + trim));
+});
+emotiveApp.listen(emotiveApp.get('port'), () => {
+    console.log('EMOTIVE app listening on port ' + emotiveApp.get('port'));
+});
