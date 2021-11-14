@@ -151,12 +151,12 @@ reactApp.get('/coding*', function (req, res) {
 });
 reactApp.get('/emotive*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
-    if (endpoint === "/files") res.sendFile(emotiveDir + "/build/index.html");
+    if (endpoint === "/files") res.sendFile(emotiveDir + "/frontend/build/index.html");
     else if (endpoint.indexOf("/files") === 0) {
-        res.sendFile(path.resolve(emotiveDir + "/build" + endpoint));
+        res.sendFile(path.resolve(emotiveDir + "/frontend/build" + endpoint));
     }
-    else if (fs.existsSync(emotiveDir + "/build" + endpoint)) res.sendFile(emotiveDir + "/build" + endpoint);
-    else res.sendFile(emotiveDir + "/build/index.html");
+    else if (fs.existsSync(emotiveDir + "/frontend/build" + endpoint)) res.sendFile(emotiveDir + "/frontend/build" + endpoint);
+    else res.sendFile(emotiveDir + "/frontend/build/index.html");
 });
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
@@ -274,8 +274,8 @@ emotiveApp.get('*', (req, res) => {
     //send the file in ../frontend/build/
     let trim = req.path.replace('/game', '').trim();
     if (trim === "") trim += "/index.html";
-    res.sendFile(path.resolve(emotiveDir+'/emotive-game/builds/' + trim));
+    res.sendFile(path.resolve(emotiveDir+'/emotive-game/build/' + trim));
 });
-emotiveApp.listen(emotiveApp.get('port'), () => {
-    console.log('EMOTIVE app listening on port ' + emotiveApp.get('port'));
-});
+if (!localTest&&false) https.createServer(apiOptions, emotiveApp).listen(emotiveApp.get('port'));
+else emotiveApp.listen(emotiveApp.get('port'));
+console.log("EMOTIVE app listening on port " + emotiveApp.get('port'));
