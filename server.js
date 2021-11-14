@@ -279,13 +279,13 @@ emotiveApp.get('*', function (req, res) {
     else if (fs.existsSync(emotiveDir + "/frontend/build" + endpoint)) res.sendFile(emotiveDir + "/frontend/build" + endpoint);
     else res.sendFile(emotiveDir + "/frontend/build/index.html");
 });
-emotiveApp.listen(emotivePort);
+emotiveApp.listen(emotiveApp.get('port'));
 
 const emotiveApi = express();
 emotiveApi.use(cors({
     origin: '*'
 }));
-emotiveApi.set('port', 8000);
+emotiveApi.set('port', 9000);
 emotiveApi.get('*', (req, res) => {
     //send the file in ../frontend/build/
     let trim = req.path.replace('/game', '').trim();
