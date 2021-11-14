@@ -191,7 +191,6 @@ apiApp.get('/clap', function (req, res) {
     res.send({ data: claps });
 });
 apiApp.get('/newClap', function (req, res) {
-    ;
     claps++;
     res.status(200).send({ data: claps });
 });
@@ -200,6 +199,14 @@ apiApp.get('/art', function (req, res) {
     else {
         res.send({ data: artPath });
     }
+});
+let emotion=0;
+apiApp.post('/emotion', function (req, res) {
+    emotion=req.body;
+    res.send("Ok");
+});
+apiApp.get('/emotion',function(req,res){
+    res.send({data:emotion});
 });
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
