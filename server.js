@@ -8,6 +8,7 @@ const path = require('path');
 const cors = require('cors');
 const { spawn } = require('child_process');
 const os = require('os');
+const bodyParser = require("body-parser");
 
 const publicIp = require('public-ip');
 const { exit } = require('process');
@@ -201,6 +202,8 @@ apiApp.get('/art', function (req, res) {
     }
 });
 let emotion=0;
+apiApp.use(bodyParser.urlencoded({ extended: false }));
+apiApp.use(bodyParser.json());
 apiApp.post('/emotion', function (req, res) {
     emotion=req.body;
     res.send("Ok");
