@@ -116,6 +116,8 @@ if (process.argv.length < 3) {
 }
 console.log("Using react dir: " + reactDir);
 
+let emotivePath=path.resolve("/home/pi/emotive");
+
 const reactApp = express();
 reactApp.use(express.static(reactDir));
 reactApp.set('view engine', 'jade');
@@ -148,6 +150,15 @@ reactApp.get('/coding', function (req, res) {
 reactApp.get('/coding*', function (req, res) {
     let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
+});
+reactApp.get('/emotive*', function (req, res) {
+    const endpoint = req.path.replace(/%20/g, " ");
+    if (endpoint === "/files") res.sendFile(emotivePath + "/emotive-game/build/index.html");
+    else if (endpoint.indexOf("/files") === 0) {
+        res.sendFile(path.resolve(emotivePath + "/emotive-game/build" + endpoint));
+    }
+    else if (fs.existsSync(emotivePath + "/build" + endpoint)) res.sendFile(emotivePath + "/emotive-game/build" + endpoint);
+    else res.sendFile(emotivePath + "/emotive-game/build/index.html");
 });
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
@@ -205,12 +216,21 @@ apiApp.get('/art', function (req, res) {
 });
 
 let emotion=0;
-apiApp.post('/emotion', function (req, res) {
+apiApp.post('/emotive', function (req, res) {
     emotion=req.body;
     res.send("Ok");
 });
-apiApp.get('/emotion',function(req,res){
+apiApp.get('/emotive',function(req,res){
     res.send({data:emotion});
+});
+apiApp.get('/emotiveGame/html5game*', function (req, res) {
+    res.sendFile(emotivePath + "/emotive-game/build/html5game" + req.path);
+});
+apiApp.get('/emotiveGame/favicon.ico', function (req, res) {
+    res.sendFile(emotivePath + "/emotive-game/build/favicon.ico");
+});
+apiApp.get('/emotiveGame', function (req, res) {
+    res.sendFile(emotivePath + "/emotive-game/build/index.html");
 });
 
 apiApp.use((req, res, next) => {
