@@ -33,7 +33,7 @@ try {
 }
 catch {
     console.log("No SSL files found, falling back to HTTP");
-    localTest=true;
+    localTest = true;
     sitePort = 3000; //80 is redirected here by iptables
 }
 
@@ -150,12 +150,12 @@ reactApp.get('/coding*', function (req, res) {
     let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
 });
-reactApp.get('/youtube', function (req, res) {res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw');});
-reactApp.get('/linkedin', function (req, res) {res.redirect('https://www.linkedin.com/in/will-farhat-12b89817b');});
-reactApp.get('/github', function (req, res) {res.redirect('https://github.com/willf668/');});
-reactApp.get('/resume', function (req, res) {res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf');});
-reactApp.get('/twitter', function (req, res) {res.redirect('https://twitter.com/will_farhat');});
-reactApp.get('/instagram', function (req, res) {res.redirect('https://www.instagram.com/will_farhat/');});
+reactApp.get('/youtube', function (req, res) { res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw'); });
+reactApp.get('/linkedin', function (req, res) { res.redirect('https://www.linkedin.com/in/will-farhat-12b89817b'); });
+reactApp.get('/github', function (req, res) { res.redirect('https://github.com/willf668/'); });
+reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf'); });
+reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
+reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
 
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
@@ -208,16 +208,24 @@ apiApp.get('/art', function (req, res) {
         res.send({ data: artPath });
     }
 });
-let emotion=0;
 apiApp.use(bodyParser.urlencoded({ extended: false }));
 apiApp.use(bodyParser.json());
+
+let emotion = 0;
 apiApp.post('/emotion', function (req, res) {
-    emotion=req.body;
+    emotion = req.body;
     res.send("Ok");
 });
-apiApp.get('/emotion',function(req,res){
-    res.send({data:emotion});
+apiApp.get('/emotion', function (req, res) {
+    res.send({ data: emotion });
 });
+
+//NFT api port
+let nftStatus = false;
+apiApp.get('/nftStatus', function (req, res) {
+    res.send({ data: nftStatus });
+});
+
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
@@ -275,6 +283,7 @@ console.log("API app listening on port " + apiPort);
 
 
 //Emotive
+//#region Emotive
 const emotiveApp = express();
 emotiveApp.use(cors({
     origin: '*'
@@ -302,5 +311,8 @@ emotiveApi.get('*', (req, res) => {
     if (trim === "") trim += "/index.html";
     res.sendFile(path.resolve(emotiveDir + '/emotive-game/build/' + trim));
 });
-emotiveApi.listen(emotiveApi.get('port'));
-console.log("EMOTIVE listening on ports " + emotiveApp.get('port') + " and " + emotiveApi.get('port'));
+//emotiveApi.listen(emotiveApi.get('port'));
+//console.log("EMOTIVE listening on ports " + emotiveApp.get('port') + " and " + emotiveApi.get('port'));
+//#endregion
+
+//NFTs are bad
