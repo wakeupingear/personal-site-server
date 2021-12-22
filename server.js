@@ -120,10 +120,10 @@ let emotiveDir = "/home/pi/emotive";
 const reactApp = express();
 reactApp.use(express.static(reactDir));
 reactApp.set('view engine', 'jade');
-reactApp.get('/.well-known/acme-challenge/9dQPhqJkntU8ttUeIL6EOM2w8gF2gPnArJtXnmzMvrw', function (req, res) {
+reactApp.get('/.well-known/acme-challenge/qjf_Z7xGMsV_3HrIbOBbqIo_P2JVc8hZ8YHaHpx5wEI', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/a-challenge');
 });
-reactApp.get('/.well-known/acme-challenge/OnvDPYbfbx_Ldu0JZVmYITFIBoPkDE5gdK7IoM8M0u8', function (req, res) {
+reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv1sM-g', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
 reactApp.get('/files/*', function (req, res) {
@@ -150,6 +150,13 @@ reactApp.get('/coding*', function (req, res) {
     let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
 });
+reactApp.get('/youtube', function (req, res) {res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw');});
+reactApp.get('/linkedin', function (req, res) {res.redirect('https://www.linkedin.com/in/will-farhat-12b89817b');});
+reactApp.get('/github', function (req, res) {res.redirect('https://github.com/willf668/');});
+reactApp.get('/resume', function (req, res) {res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf');});
+reactApp.get('/twitter', function (req, res) {res.redirect('https://twitter.com/will_farhat');});
+reactApp.get('/instagram', function (req, res) {res.redirect('https://www.instagram.com/will_farhat/');});
+
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
