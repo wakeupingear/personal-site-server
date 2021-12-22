@@ -18,7 +18,7 @@ publicIp.v4().then(ip => {
 });
 
 const hostUsername = os.userInfo().username;
-const localTest = (hostUsername !== "pi" && hostUsername !== "root");
+let localTest = (hostUsername !== "pi" && hostUsername !== "root");
 
 let siteOptions = {}, apiOptions = {};
 let sitePort = 443, apiPort = 5000;
