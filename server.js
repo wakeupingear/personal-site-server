@@ -33,8 +33,8 @@ try {
 }
 catch {
     console.log("No SSL files found, falling back to HTTP");
-    if (localTest) sitePort = 2000;
-    else sitePort = 80;
+    localTest=true;
+    sitePort = 3000; //80 is redirected here by iptables
 }
 
 let dayPath = path.resolve("./archive/");
