@@ -316,3 +316,28 @@ emotiveApi.get('*', (req, res) => {
 //#endregion
 
 //NFTs are bad
+const nftStatusPath = reactDir + "/../are-nfts-good/";
+const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
+const twitter = new twitterAPI();
+const hashtags="\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
+const yesWeight=1, noWeight=20;
+const getTwitterData = function () {
+    console.log("Grabbling oldest poll...")
+    twitter.getMostRecentTweet('areNftsGood').then(data => {
+        nftStatus=(data&&data.polls&&data.polls.options&&data.polls.options.length==2&&data.polls.options[0].votes*yesWeight>data.polls.options[1].votes*noWeight);
+        twitter.createPoll("Are NFTs Good?"+hashtags, ["Yes", "No"], 1440);
+        console.log("Tweeting new poll...");
+    });
+}
+const twitterJob = schedule.scheduleJob('0 0 10 * * *', getTwitterData);
+const nftStatusApp = express();
+nftStatusApp.use(cors({
+    origin: '*'
+}));
+nftStatusApp.get('*', (req, res) => {
+    let file = (req.path !== "/" ? req.path : "index.html");
+    res.sendFile(path.resolve(nftStatusPath + "/frontend/" + file));
+});
+nftStatusApp.set('port', 2496);
+nftStatusApp.listen(nftStatusApp.get('port'));
+console.log("NFT STATUS listening on port " + nftStatusApp.get('port'));
