@@ -73,7 +73,7 @@ fs.readFile(clapPath, function (err, data) {
 
 //save
 const save = function () {
-    fs.writeFile(clapPath, claps, function (err) {
+    fs.writeFile(clapPath, claps.toString(), function (err) {
         if (err) {
             return console.log(err);
         }
@@ -120,12 +120,45 @@ let emotiveDir = "/home/pi/emotive";
 const reactApp = express();
 reactApp.use(express.static(reactDir));
 reactApp.set('view engine', 'jade');
+
+//NFTs are bad
+const nftStatusPath = reactDir + "/../are-nfts-good/";
+const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
+const twitter = new twitterAPI();
+const hashtags = "\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
+const yesWeight = 1, noWeight = 10000;
+const getTwitterData = function () {
+    console.log("Grabbling oldest poll...")
+    twitter.getMostRecentTweet('areNftsGood').then(data => {
+        nftStatus = (data && data.polls && data.polls.options && data.polls.options.length == 2 && (data.polls.options[0].votes + 1) * yesWeight > (data.polls.options[1].votes + 1) * noWeight);
+        twitter.createPoll("Are NFTs Good?" + hashtags, ["Yes", "No"], 1440);
+        console.log("Tweeting new poll...");
+    });
+}
+const twitterJob = schedule.scheduleJob('0 0 10 * * *', getTwitterData);
+reactApp.use(function (req, res, next) {
+    const rawUrl = req.get('Host');
+    const url = (rawUrl.includes(':')? rawUrl.substring(0,rawUrl.indexOf(':')):rawUrl);
+    switch (url) {
+        case "arenftsgood.com":
+            let file = (req.path !== "/" ? req.path : "index.html");
+            res.sendFile(path.resolve(nftStatusPath + "/frontend/" + file));
+            return;
+        default:
+            break;
+    }
+    return next();
+});
+
+//SSL challenges
 reactApp.get('/.well-known/acme-challenge/qjf_Z7xGMsV_3HrIbOBbqIo_P2JVc8hZ8YHaHpx5wEI', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/a-challenge');
 });
 reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv1sM-g', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
+
+//Drive files
 reactApp.get('/files/*', function (req, res) {
     const filePath = path.resolve(reactDir + "/public/" + req.path);
     if (!fs.existsSync(filePath)) {
@@ -133,6 +166,8 @@ reactApp.get('/files/*', function (req, res) {
     }
     else res.sendFile(filePath);
 });
+
+//Outset page
 reactApp.get('/outset*', function (req, res) {
     if (req.path == "/outset" || req.path == "/outset/" || req.path == "/outset/index.html") {
         res.sendFile(reactDir + "/build/index.html");
@@ -143,6 +178,8 @@ reactApp.get('/outset*', function (req, res) {
         res.sendFile(path.resolve(reactDir + "/src/assets/outsetPage/" + endFile));
     }
 });
+
+//Coding page
 reactApp.get('/coding', function (req, res) {
     res.sendFile(reactDir + "/src/coding/");
 });
@@ -150,6 +187,8 @@ reactApp.get('/coding*', function (req, res) {
     let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
     res.sendFile(file);
 });
+
+//Social links
 reactApp.get('/youtube', function (req, res) { res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw'); });
 reactApp.get('/linkedin', function (req, res) { res.redirect('https://www.linkedin.com/in/will-farhat-12b89817b'); });
 reactApp.get('/github', function (req, res) { res.redirect('https://github.com/willf668/'); });
@@ -157,6 +196,7 @@ reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/w
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
 reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
 
+//Willfarhat.com files
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
@@ -170,6 +210,8 @@ if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
+
+//Api
 const apiApp = express();
 apiApp.use(cors({
     origin: '*'
@@ -314,30 +356,3 @@ emotiveApi.get('*', (req, res) => {
 //emotiveApi.listen(emotiveApi.get('port'));
 //console.log("EMOTIVE listening on ports " + emotiveApp.get('port') + " and " + emotiveApi.get('port'));
 //#endregion
-
-//NFTs are bad
-const nftStatusPath = reactDir + "/../are-nfts-good/";
-const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
-const twitter = new twitterAPI();
-const hashtags="\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
-const yesWeight=1, noWeight=20;
-const getTwitterData = function () {
-    console.log("Grabbling oldest poll...")
-    twitter.getMostRecentTweet('areNftsGood').then(data => {
-        nftStatus=(data&&data.polls&&data.polls.options&&data.polls.options.length==2&&data.polls.options[0].votes*yesWeight>data.polls.options[1].votes*noWeight);
-        twitter.createPoll("Are NFTs Good?"+hashtags, ["Yes", "No"], 1440);
-        console.log("Tweeting new poll...");
-    });
-}
-const twitterJob = schedule.scheduleJob('0 0 10 * * *', getTwitterData);
-const nftStatusApp = express();
-nftStatusApp.use(cors({
-    origin: '*'
-}));
-nftStatusApp.get('*', (req, res) => {
-    let file = (req.path !== "/" ? req.path : "index.html");
-    res.sendFile(path.resolve(nftStatusPath + "/frontend/" + file));
-});
-nftStatusApp.set('port', 2496);
-nftStatusApp.listen(nftStatusApp.get('port'));
-console.log("NFT STATUS listening on port " + nftStatusApp.get('port'));
