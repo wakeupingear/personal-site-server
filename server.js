@@ -66,26 +66,23 @@ const memProfile = schedule.scheduleJob('*/10 * * * *', function () {
 });
 
 //claps
-let auth = "", github = "", claps = 0;
+let auth = "";
 let secrets = null;
 let secretsPath = path.resolve("./secrets.json");
 if (!localTest) secretsPath = path.resolve("/home/pi/personal-site-server/secrets.json");
 
-//save
+//save/load
 const save = () => {
-    fs.writeFile(secretsPath, secrets, function (err) {
+    fs.writeFile(secretsPath, JSON.stringify(secrets), function (err) {
         if (err) {
             return console.log(err);
         }
         console.log("Saved data");
     });
 }
-
 const load = () => {
     secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
     auth = ("admin:" + secrets.password).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
-    github = secrets.github;
-    claps = secrets.claps;
 }
 load();
 
@@ -150,7 +147,6 @@ else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
 //Dead man's switch
-let alive = true;
 function stillAlive(existingTimeout) {
     if (existingTimeout !== undefined) clearTimeout(existingTimeout);
     return setTimeout(() => {
@@ -159,9 +155,12 @@ function stillAlive(existingTimeout) {
                 process.exit(0);
             }
 
-            if (!alive) return;
+            if (!secrets.alive) return;
             console.log("He's dead, Jim.");
-            alive = false;
+            //get current year
+            secrets.date = new Date().getFullYear().toString();
+            secrets.alive = false;
+            save();
             fs.readFile(path.resolve("./will/emailData.json"), function (err, data) {
                 if (err) {
                     throw err;
@@ -208,7 +207,10 @@ apiApp.use(cors({
 }));
 apiApp.use(fileupload());
 apiApp.get('/alive', function (req, res) {
-    res.send({ data: true });
+    res.send({ data: secrets.alive });
+});
+apiApp.get('/date', function (req, res) {
+    res.send({ data: secrets.date });
 });
 apiApp.get('/html5game*', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build" + req.path);
@@ -231,11 +233,11 @@ apiApp.get('/fileList', function (req, res) {
     res.send({ data: fileList });
 });
 apiApp.get('/clap', function (req, res) {
-    res.send({ data: claps });
+    res.send({ data: secrets.claps });
 });
 apiApp.get('/newClap', function (req, res) {
-    claps++;
-    res.status(200).send({ data: claps });
+    secrets.claps++;
+    res.status(200).send({ data: secrets.claps });
 });
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
@@ -282,14 +284,14 @@ apiApp.use((req, res, next) => {
         res.send({ data: false });
         return;
     }
-    if (alive) deadManSwitch = stillAlive(deadManSwitch);
+    if (secrets.alive) deadManSwitch = stillAlive(deadManSwitch);
     return next();
 });
 apiApp.get('/ip', function (req, res) {
     res.send({ data: IPV4 });
 });
 apiApp.get('/github', function (req, res) {
-    res.send({ data: github });
+    res.send({ data: secrets.github });
 });
 
 apiApp.post('/upload*', (req, res) => {
