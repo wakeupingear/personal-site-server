@@ -231,7 +231,7 @@ apiApp.use(cors({
 }));
 apiApp.use(fileupload());
 apiApp.get('/alive', function (req, res) {
-    res.send(alive);
+    res.send({ data: true});
 });
 apiApp.get('/html5game*', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build" + req.path);
