@@ -173,7 +173,7 @@ else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
 //Dead man's switch
-let dead = false;
+let alive = true;
 function stillAlive(existingTimeout) {
     if (existingTimeout !== undefined) clearTimeout(existingTimeout);
     return setTimeout(() => {
@@ -182,9 +182,9 @@ function stillAlive(existingTimeout) {
                 process.exit(0);
             }
 
-            if (dead) return;
+            if (!alive) return;
             console.log("He's dead, Jim.");
-            dead = true;
+            alive = false;
             fs.readFile(path.resolve("./will/emailData.json"), function (err, data) {
                 if (err) {
                     throw err;
@@ -230,6 +230,9 @@ apiApp.use(cors({
     origin: '*'
 }));
 apiApp.use(fileupload());
+apiApp.get('/alive', function (req, res) {
+    res.send(alive);
+});
 apiApp.get('/html5game*', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build" + req.path);
 });
@@ -302,7 +305,7 @@ apiApp.use((req, res, next) => {
         res.send({ data: false });
         return;
     }
-    if (!dead) deadManSwitch = stillAlive(deadManSwitch);
+    if (alive) deadManSwitch = stillAlive(deadManSwitch);
     return next();
 });
 apiApp.get('/ip', function (req, res) {
