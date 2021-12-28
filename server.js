@@ -23,7 +23,7 @@ const hostUsername = os.userInfo().username;
 let localTest = (hostUsername !== "pi" && hostUsername !== "root");
 
 let siteOptions = {}, apiOptions = {};
-let sitePort = 3000, apiPort = 5000;
+let sitePort = 443, apiPort = 5000;
 try {
     siteOptions.key = fs.readFileSync('/etc/letsencrypt/live/willfarhat.com/privkey.pem');
     siteOptions.cert = fs.readFileSync('/etc/letsencrypt/live/willfarhat.com/cert.pem');
@@ -36,6 +36,7 @@ try {
 catch {
     console.log("No SSL files found, falling back to HTTP");
     localTest = true;
+    sitePort = 3000;
 }
 
 let dayPath = path.resolve("./archive/");
