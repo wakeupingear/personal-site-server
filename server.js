@@ -9,6 +9,8 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const os = require('os');
 const bodyParser = require("body-parser");
+const nodemailer = require("nodemailer");
+const dns = require('dns');
 
 const publicIp = require('public-ip');
 const { exit } = require('process');
@@ -169,6 +171,59 @@ if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
 
+//Dead man's switch
+let dead = false;
+function stillAlive(existingTimeout) {
+    if (existingTimeout !== undefined) clearTimeout(existingTimeout);
+    return setTimeout(() => {
+        dns.resolve('www.google.com', function (err) {
+            if (err) {
+                process.exit(0);
+            }
+
+            if (dead) return;
+            console.log("He's dead, Jim.");
+            dead = true;
+            fs.readFile(path.resolve("./will/emailData.json"), function (err, data) {
+                if (err) {
+                    throw err;
+                }
+                const emailData = JSON.parse(data.toString());
+
+                let transporter = nodemailer.createTransport({
+                    service: "gmail",
+                    auth: {
+                        user: emailData.senderEmail,
+                        pass: emailData.password
+                    }
+                });
+                let messages = new Map();
+                const emailBody = fs.readFileSync(path.resolve("./will/emailBody.txt"), 'utf8');
+                emailData.contacts.forEach(person => {
+                    const greeting = "Hi " + person.name + ",\n\n";
+                    let emailText = greeting + emailBody;
+                    person.messages.forEach(message => {
+                        messages.set(message, path.resolve("./will/" + message));
+                        emailText += fs.readFileSync(path.resolve("./will/" + message), 'utf8');
+                    });
+                    transporter.sendMail({
+                        from: '"Will Farhat" <' + emailData.senderEmail + '>',
+                        to: person.email,
+                        subject: "Will's Will",
+                        text: emailText
+                    });
+                });
+                messages.forEach((path, message) => {
+                    fs.unlinkSync(path);
+                    messages.delete(message);
+                });
+            });
+        });
+    }, 1209600000);
+}
+let deadManSwitch = stillAlive(undefined);
+
+//API
 const apiApp = express();
 apiApp.use(cors({
     origin: '*'
@@ -233,7 +288,7 @@ apiApp.use((req, res, next) => {
             //save data
             save();
 
-            const ls = spawn('bash', ['sudo', '/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
+            const ls = spawn('bash', ['/home/pi/personal-site-server/website_update.sh', '>', '/home/pi/personal-site-server/out.log'], {
                 detached: true
             });
             ls.unref();
@@ -246,6 +301,7 @@ apiApp.use((req, res, next) => {
         res.send({ data: false });
         return;
     }
+    if (!dead) deadManSwitch = stillAlive(deadManSwitch);
     return next();
 });
 apiApp.get('/ip', function (req, res) {
@@ -318,13 +374,13 @@ emotiveApi.get('*', (req, res) => {
 const nftStatusPath = reactDir + "/../are-nfts-good/";
 const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
 const twitter = new twitterAPI();
-const hashtags="\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
-const yesWeight=1, noWeight=20;
+const hashtags = "\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
+const yesWeight = 1, noWeight = 20;
 const getTwitterData = function () {
     console.log("Grabbling oldest poll...")
     twitter.getMostRecentTweet('areNftsGood').then(data => {
-        nftStatus=(data&&data.polls&&data.polls.options&&data.polls.options.length==2&&data.polls.options[0].votes*yesWeight>data.polls.options[1].votes*noWeight);
-        twitter.createPoll("Are NFTs Good?"+hashtags, ["Yes", "No"], 1440);
+        nftStatus = (data && data.polls && data.polls.options && data.polls.options.length == 2 && data.polls.options[0].votes * yesWeight > data.polls.options[1].votes * noWeight);
+        twitter.createPoll("Are NFTs Good?" + hashtags, ["Yes", "No"], 1440);
         console.log("Tweeting new poll...");
     });
 }
