@@ -26,5 +26,6 @@ yarn-error.log*
 password.txt
 github.txt
 claps.txt
+secrets.json
 out.log
 /will

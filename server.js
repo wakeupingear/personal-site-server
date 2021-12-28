@@ -53,35 +53,6 @@ try {
     console.error(err);
 }
 
-//claps
-let claps = 0;
-let clapPath = path.resolve("./claps.txt");
-if (!localTest) clapPath = path.resolve("/home/pi/personal-site-server/claps.txt");
-if (!fs.existsSync(clapPath)) {
-    fs.writeFile(clapPath, "0", function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("New clap file created");
-    });
-}
-fs.readFile(clapPath, function (err, data) {
-    if (err) {
-        console.log("Error reading claps");
-        return;
-    }
-    claps = Number(data.toString());
-});
-
-//save
-const save = function () {
-    fs.writeFile(clapPath, claps, function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("Saved claps");
-    });
-}
 if (!localTest) {
     const job = schedule.scheduleJob('0 0 3 * * *', function () {
         save();
@@ -94,23 +65,29 @@ const memProfile = schedule.scheduleJob('*/10 * * * *', function () {
     console.log("Memory usage: " + process.memoryUsage().heapUsed / 1024 / 1024 + "MB");
 });
 
-//password
-let auth = "";
-fs.readFile(__dirname + '/password.txt', function (err, data) {
-    if (err) {
-        throw err;
-    }
-    auth = ("admin:" + data.toString()).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
-});
+//claps
+let auth = "", github = "", claps = 0;
+let secrets = null;
+let secretsPath = path.resolve("./secrets.json");
+if (!localTest) secretsPath = path.resolve("/home/pi/personal-site-server/secrets.json");
 
-//GH token
-let github = "";
-fs.readFile(__dirname + '/github.txt', function (err, data) {
-    if (err) {
-        throw err;
-    }
-    github = data.toString();
-});
+//save
+const save = () => {
+    fs.writeFile(secretsPath, secrets, function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        console.log("Saved data");
+    });
+}
+
+const load = () => {
+    secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
+    auth = ("admin:" + secrets.password).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
+    github = secrets.github;
+    claps = secrets.claps;
+}
+load();
 
 let reactDir = process.argv[2];
 if (process.argv.length < 3) {
@@ -231,7 +208,7 @@ apiApp.use(cors({
 }));
 apiApp.use(fileupload());
 apiApp.get('/alive', function (req, res) {
-    res.send({ data: true});
+    res.send({ data: true });
 });
 apiApp.get('/html5game*', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build" + req.path);
