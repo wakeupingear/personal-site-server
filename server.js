@@ -54,10 +54,13 @@ try {
 }
 
 if (!localTest) {
-    const job = schedule.scheduleJob('0 0 3 * * *', function () {
-        save();
+    const restartJob = schedule.scheduleJob('0 0 3 * * *', function () {
         console.log("Restarting...");
         process.exit(0);
+    });
+    const saveJob = schedule.scheduleJob('0 0 * * * *', function () {
+        console.log("Saving...");
+        saveData();
     });
 }
 
