@@ -13,8 +13,6 @@ git stash
 git pull
 echo "Installing npm packages..."
 npm i
-echo "Building site..."
-npm run build
 echo "Site up to date"
 
 cd /home/pi/personal-site-server
