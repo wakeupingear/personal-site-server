@@ -19,6 +19,8 @@ publicIp.v4().then(ip => {
     IPV4 = ip;
 });
 
+const { Indexer } = require('./indexer.js');
+
 const hostUsername = os.userInfo().username;
 let localTest = (hostUsername !== "pi" && hostUsername !== "root");
 
@@ -39,6 +41,7 @@ catch {
     sitePort = 3000;
 }
 
+//Archive setup
 let dayPath = path.resolve("./archive/");
 try {
     if (!fs.existsSync(dayPath)) {
@@ -64,11 +67,12 @@ if (!localTest) {
     });
 }
 
+//Memory logging
 const memProfile = schedule.scheduleJob('*/10 * * * *', function () {
     console.log("Memory usage: " + process.memoryUsage().heapUsed / 1024 / 1024 + "MB");
 });
 
-//claps
+//Secret variables
 let auth = "";
 let secrets = null;
 let secretsPath = path.resolve("./secrets.json");
@@ -89,6 +93,7 @@ const load = () => {
 }
 load();
 
+//Directory setup
 let reactDir = process.argv[2];
 if (process.argv.length < 3) {
     reactDir = path.resolve("../personal-site-21");
@@ -96,6 +101,7 @@ if (process.argv.length < 3) {
 console.log("Using react dir: " + reactDir);
 let emotiveDir = "/home/pi/emotive";
 
+//Frontend setup
 const reactApp = express();
 reactApp.use(express.static(reactDir));
 reactApp.set('view engine', 'jade');
@@ -135,7 +141,6 @@ reactApp.get('/github', function (req, res) { res.redirect('https://github.com/w
 reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf'); });
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
 reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
-
 reactApp.get('*', function (req, res) {
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
@@ -224,7 +229,6 @@ apiApp.get('/favicon.ico', function (req, res) {
 apiApp.get('/game', function (req, res) {
     res.sendFile(reactDir + "/public/personal-site-game/build/index.html");
 });
-
 let artPath = "";
 apiApp.get('/archive/*', function (req, res) {
     const filePath = path.resolve("./" + req.path);
@@ -250,7 +254,7 @@ apiApp.get('/art', function (req, res) {
 });
 apiApp.use(bodyParser.urlencoded({ extended: false }));
 apiApp.use(bodyParser.json());
-
+//Emotive API endpoints
 let emotion = 0;
 apiApp.post('/emotion', function (req, res) {
     emotion = req.body;
@@ -259,13 +263,12 @@ apiApp.post('/emotion', function (req, res) {
 apiApp.get('/emotion', function (req, res) {
     res.send({ data: emotion });
 });
-
-//NFT api port
+//NFT API endpoints
 let nftStatus = false;
 apiApp.get('/nftStatus', function (req, res) {
     res.send({ data: nftStatus });
 });
-
+//API authentication
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
         if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
@@ -296,7 +299,10 @@ apiApp.get('/ip', function (req, res) {
 apiApp.get('/github', function (req, res) {
     res.send({ data: secrets.github });
 });
+//Contacts
+const contacts = new Indexer(path.resolve("./contacts/contactsIndex.json"), path.resolve("./contacts/contacts.json"));
 
+//File uploading
 apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
         return res.status(500).send({ msg: "No file attached" })
