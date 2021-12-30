@@ -301,7 +301,17 @@ apiApp.get('/github', function (req, res) {
 });
 //Contacts
 const contacts = new Indexer(path.resolve("./contacts/contactsIndex.json"), path.resolve("./contacts/contacts.json"));
-
+contacts.add("Will Farhat @joe")
+contacts.add("Will Farhatson pie@")
+contacts.add("Fred Flinstone")
+//contacts.print();
+console.log(contacts.search("Will"))
+contacts.remove("Will Farhat")
+console.log(contacts.search("Farhat"))
+contacts.remove("Farhat")
+//contacts.print();
+console.log(contacts.search("Farhat"))
+//console.log(contacts.search("Fred"))
 //File uploading
 apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
