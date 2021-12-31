@@ -43,9 +43,13 @@ catch {
 
 //Archive setup
 let dayPath = path.resolve("./archive/");
+const archiveFilePath = path.resolve(dayPath + "/files/");
 try {
-    if (!fs.existsSync(dayPath)) {
-        fs.mkdirSync(dayPath);
+    if (!fs.existsSync(dayPath)) fs.mkdirSync(dayPath);
+    if (!fs.existsSync(archiveFilePath)) {
+        fs.mkdirSync(archiveFilePath);
+        fs.mkdirSync(archiveFilePath + "/private");
+        fs.mkdirSync(archiveFilePath + "/public");
     }
     dayPath += "/" + new Date().toISOString().substring(0, 10);
     dayPath = path.resolve(dayPath);
@@ -112,10 +116,8 @@ reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
 reactApp.get('/files/*', function (req, res) {
-    const filePath = path.resolve(reactDir + "/public/" + req.path);
-    if (!fs.existsSync(filePath)) {
-        res.status(404).send("File not found");
-    }
+    const filePath = path.resolve(archiveFilePath+"/private/"+req.path.replace("/files/",""));
+    if (!fs.existsSync(filePath)) res.redirect("https://willfarhat.com/404")
     else res.sendFile(filePath);
 });
 reactApp.get('/outset*', function (req, res) {
@@ -234,8 +236,8 @@ apiApp.get('/archive/*', function (req, res) {
     const filePath = path.resolve("./" + req.path);
     res.sendFile(filePath);
 });
-apiApp.get('/fileList', function (req, res) {
-    const fileDir = path.resolve(reactDir + "/public/files/")
+apiApp.get('/fileList/*', function (req, res) {
+    const fileDir = path.resolve(archiveFilePath+req.path.replace("/fileList",""));
     const fileList = fs.readdirSync(fileDir);
     res.send({ data: fileList });
 });
@@ -271,7 +273,7 @@ apiApp.get('/nftStatus', function (req, res) {
 //API authentication
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
-        if ((req.headers["user-agent"]).includes("GitHub-Hookshot")) {
+        if (false&&(req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
 
             //save data
@@ -299,27 +301,28 @@ apiApp.get('/ip', function (req, res) {
 apiApp.get('/github', function (req, res) {
     res.send({ data: secrets.github });
 });
+apiApp.get('/chadmin/files/*', function (req, res) {
+    const filePath = path.resolve(archiveFilePath+"/private/"+req.path.replace("/chadmin/files/",""));
+    if (!fs.existsSync(filePath)) res.redirect("https://willfarhat.com/404");
+    else res.sendFile(filePath);
+});
 //Contacts
 const contacts = new Indexer(path.resolve("./contactsInfo.json"));
-contacts.add("will farhat @will_farhat");
-contacts.add("fred flinstone @yabbadabbadoo fred@joe.com")
-contacts.save()
-apiApp.get('/contacts/search/*',function(req,res){
-    const query=req.path.replace('/contacts/search/','').replace(/%20/g, " ").trim();
-    const results=contacts.search(query);
-    res.send({data: results});
+apiApp.get('/contacts/search/*', function (req, res) {
+    const query = req.path.replace('/contacts/search/', '').replace(/%20/g, " ").trim();
+    const results = contacts.search(query);
+    res.send({ data: results });
 });
 //File uploading
 apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
-        return res.status(500).send({ msg: "No file attached" })
+        return res.status(500).send({ msg: "No file attached" });
     }
     const myFile = req.files.file;
-    let filePath = path.resolve(reactDir + (req.path.replace("/upload/files", "")) + "/public/files/" + myFile.name);
-    if (req.path.includes("upload/art")) {
-        filePath = dayPath + "/" + myFile.name;
-        artPath = filePath.substring(filePath.indexOf("archive"));
-    }
+    let filePath = dayPath;
+    if (req.path.includes("upload/files")) filePath = path.resolve(archiveFilePath + "/public");
+    else if (req.path.includes("upload/chadmin/files")) filePath = path.resolve(archiveFilePath + "/private");
+    filePath=path.resolve(filePath,myFile.name);
     console.log("Uploading file: " + filePath);
     myFile.mv(filePath, function (err) {
         if (err) {
