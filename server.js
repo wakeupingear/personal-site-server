@@ -19,7 +19,7 @@ publicIp.v4().then(ip => {
     IPV4 = ip;
 });
 
-const { Indexer } = require('./indexer.js');
+const Indexer = require('friendzone'); //I made this!!!
 
 const hostUsername = os.userInfo().username;
 let localTest = (hostUsername !== "pi" && hostUsername !== "root");
@@ -38,7 +38,7 @@ try {
 catch {
     console.log("No SSL files found, falling back to HTTP");
     localTest = true;
-    sitePort = 3000;
+    sitePort = 2000;
 }
 
 //Archive setup
@@ -300,18 +300,15 @@ apiApp.get('/github', function (req, res) {
     res.send({ data: secrets.github });
 });
 //Contacts
-const contacts = new Indexer(path.resolve("./contacts/contactsIndex.json"), path.resolve("./contacts/contacts.json"));
-contacts.add("Will Farhat @joe")
-contacts.add("Will Farhatson pie@")
-contacts.add("Fred Flinstone")
-//contacts.print();
-console.log(contacts.search("Will"))
-contacts.remove("Will Farhat")
-console.log(contacts.search("Farhat"))
-contacts.remove("Farhat")
-//contacts.print();
-console.log(contacts.search("Farhat"))
-//console.log(contacts.search("Fred"))
+const contacts = new Indexer(path.resolve("./contactsInfo.json"));
+contacts.add("will farhat @will_farhat");
+contacts.add("fred flinstone @yabbadabbadoo fred@joe.com")
+contacts.save()
+apiApp.get('/contacts/search/*',function(req,res){
+    const query=req.path.replace('/contacts/search/','').replace(/%20/g, " ").trim();
+    const results=contacts.search(query);
+    res.send({data: results});
+});
 //File uploading
 apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
