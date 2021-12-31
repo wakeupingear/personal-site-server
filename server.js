@@ -43,6 +43,7 @@ catch {
 
 //Archive setup
 let dayPath = path.resolve("./archive/");
+if (dayPath == "/archive") dayPath = path.resolve("/home/pi/personal-site-server/archive");
 const archiveFilePath = path.resolve(dayPath + "/files/");
 try {
     if (!fs.existsSync(dayPath)) fs.mkdirSync(dayPath);
@@ -307,7 +308,9 @@ apiApp.get('/chadmin/files/*', function (req, res) {
     else res.sendFile(filePath);
 });
 //Contacts
-const contacts = new Indexer(path.resolve("./contactsInfo.json"));
+let contactPath = path.resolve("./contactsInfo.json");
+if (contactPath == "/contactsInfo.json") contactPath = path.resolve("/home/pi/personal-site-server/contactsInfo.json");
+const contacts = new Indexer(contactPath);
 apiApp.get('/contacts/search/*', function (req, res) {
     const query = req.path.replace('/contacts/search/', '').replace(/%20/g, " ").trim();
     const results = contacts.search(query);
