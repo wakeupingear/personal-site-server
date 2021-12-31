@@ -116,7 +116,7 @@ reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
 reactApp.get('/files/*', function (req, res) {
-    const filePath = path.resolve(archiveFilePath+"/private/"+req.path.replace("/files/",""));
+    const filePath = path.resolve(archiveFilePath+"/public/"+req.path.replace("/files/",""));
     if (!fs.existsSync(filePath)) res.redirect("https://willfarhat.com/404")
     else res.sendFile(filePath);
 });
