@@ -19,7 +19,7 @@ publicIp.v4().then(ip => {
     IPV4 = ip;
 });
 
-const Indexer = require('friendzone'); //I made this!!!
+const Indexer = require('friends-js'); //I made this!!!
 
 const hostUsername = os.userInfo().username;
 let localTest = (hostUsername !== "pi" && hostUsername !== "root");

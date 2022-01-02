@@ -30,5 +30,6 @@ secrets.json
 out.log
 twitterAPIData.json
 contactsInfo.json
+indexer.js
 /will
 /contacts
