@@ -114,6 +114,9 @@ const send404 = function (req, res) {
 //Frontend setup
 const reactApp = express();
 reactApp.use(express.static(reactDir));
+const sendRoot = function (req, res) {
+    res.sendFile(reactDir + "/build/index.html");
+}
 reactApp.set('view engine', 'jade');
 reactApp.get('/.well-known/acme-challenge/qjf_Z7xGMsV_3HrIbOBbqIo_P2JVc8hZ8YHaHpx5wEI', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/a-challenge');
@@ -121,6 +124,8 @@ reactApp.get('/.well-known/acme-challenge/qjf_Z7xGMsV_3HrIbOBbqIo_P2JVc8hZ8YHaHp
 reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv1sM-g', function (req, res) {
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
+reactApp.get('/chadmin', (req, res) => sendRoot(req, res));
+reactApp.get('/chadmin/files', (req, res) => sendRoot(req, res));
 reactApp.get('/files/*', function (req, res) {
     const filePath = path.resolve(archiveFilePath + "/public/" + req.path.replace("/files/", ""));
     if (!fs.existsSync(filePath)) send404(req, res);
@@ -167,7 +172,7 @@ reactApp.get('*', function (req, res) {
     }
     else if (fs.existsSync(reactDir + "/build" + endpoint)) res.sendFile(reactDir + "/build" + endpoint);
     else if (endpoint !== "/" && !pages.has(endpoint.substring(1))) send404(req, res);
-    else res.sendFile(reactDir + "/build/index.html");
+    else sendRoot(req, res);
 });
 if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
