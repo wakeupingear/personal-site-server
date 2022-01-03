@@ -106,6 +106,11 @@ if (process.argv.length < 3) {
 console.log("Using react dir: " + reactDir);
 let emotiveDir = "/home/pi/emotive";
 
+const send404 = function (req, res) {
+    let host = req.protocol + '://' + req.get('host');
+    res.redirect(host + "/404");
+}
+
 //Frontend setup
 const reactApp = express();
 reactApp.use(express.static(reactDir));
@@ -117,9 +122,13 @@ reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
 reactApp.get('/files/*', function (req, res) {
-    const filePath = path.resolve(archiveFilePath+"/public/"+req.path.replace("/files/",""));
-    if (!fs.existsSync(filePath)) res.redirect("https://willfarhat.com/404")
+    const filePath = path.resolve(archiveFilePath + "/public/" + req.path.replace("/files/", ""));
+    if (!fs.existsSync(filePath)) send404(req, res);
     else res.sendFile(filePath);
+});
+reactApp.get('/chadmin/files/*', function (req, res, next) {
+    if (req.path == "/chadmin/files/") next();
+    else send404(req, res);
 });
 reactApp.get('/outset*', function (req, res) {
     if (req.path == "/outset" || req.path == "/outset/" || req.path == "/outset/index.html") {
@@ -144,13 +153,20 @@ reactApp.get('/github', function (req, res) { res.redirect('https://github.com/w
 reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf'); });
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
 reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
+const pages = new Set();
+["inc", "outset", "emotive", "jam", "research", "youtube", "thk", "cfe", "remotion", "freehand"].forEach(pages.add, pages);
 reactApp.get('*', function (req, res) {
+    if (req.path == "/404") {
+        res.sendFile(path.resolve(reactDir + "/public/404.html"));
+        return;
+    }
     const endpoint = req.path.replace(/%20/g, " ");
     if (endpoint === "/files") res.sendFile(reactDir + "/build/index.html");
     else if (endpoint.indexOf("/files") === 0) {
         res.sendFile(path.resolve(reactDir + "/build" + endpoint));
     }
     else if (fs.existsSync(reactDir + "/build" + endpoint)) res.sendFile(reactDir + "/build" + endpoint);
+    else if (endpoint !== "/" && !pages.has(endpoint.substring(1))) send404(req, res);
     else res.sendFile(reactDir + "/build/index.html");
 });
 if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
@@ -238,7 +254,7 @@ apiApp.get('/archive/*', function (req, res) {
     res.sendFile(filePath);
 });
 apiApp.get('/fileList/*', function (req, res) {
-    const fileDir = path.resolve(archiveFilePath+req.path.replace("/fileList",""));
+    const fileDir = path.resolve(archiveFilePath + req.path.replace("/fileList", ""));
     const fileList = fs.readdirSync(fileDir);
     res.send({ data: fileList });
 });
@@ -274,7 +290,7 @@ apiApp.get('/nftStatus', function (req, res) {
 //API authentication
 apiApp.use((req, res, next) => {
     if (req.headers["user-agent"] !== undefined) {
-        if (false&&(req.headers["user-agent"]).includes("GitHub-Hookshot")) {
+        if (false && (req.headers["user-agent"]).includes("GitHub-Hookshot")) {
             res.send("OK buddy <3");
 
             //save data
@@ -303,8 +319,8 @@ apiApp.get('/github', function (req, res) {
     res.send({ data: secrets.github });
 });
 apiApp.get('/chadmin/files/*', function (req, res) {
-    const filePath = path.resolve(archiveFilePath+"/private/"+req.path.replace("/chadmin/files/",""));
-    if (!fs.existsSync(filePath)) res.redirect("https://willfarhat.com/404");
+    const filePath = path.resolve(archiveFilePath + "/private/" + req.path.replace("/chadmin/files/", ""));
+    if (!fs.existsSync(filePath)) send404(req, res);
     else res.sendFile(filePath);
 });
 //Contacts
@@ -325,7 +341,7 @@ apiApp.post('/upload*', (req, res) => {
     let filePath = dayPath;
     if (req.path.includes("upload/files")) filePath = path.resolve(archiveFilePath + "/public");
     else if (req.path.includes("upload/chadmin/files")) filePath = path.resolve(archiveFilePath + "/private");
-    filePath=path.resolve(filePath,myFile.name);
+    filePath = path.resolve(filePath, myFile.name);
     console.log("Uploading file: " + filePath);
     myFile.mv(filePath, function (err) {
         if (err) {
