@@ -153,7 +153,7 @@ reactApp.get('/coding*', function (req, res) {
     res.sendFile(file);
 });
 reactApp.get('/youtube', function (req, res) { res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw'); });
-reactApp.get('/linkedin', function (req, res) { res.redirect('https://www.linkedin.com/in/will-farhat-12b89817b'); });
+reactApp.get('/linkedin', function (req, res) { res.redirect('https://www.linkedin.com/in/will-farhat'); });
 reactApp.get('/github', function (req, res) { res.redirect('https://github.com/willf668/'); });
 reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf'); });
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
@@ -401,7 +401,7 @@ const nftStatusPath = reactDir + "/../are-nfts-good/";
 const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
 const twitter = new twitterAPI();
 const hashtags = "\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
-const yesWeight = 1, noWeight = 20;
+const yesWeight = 1, noWeight = 20000000000000000000000000000000000000;
 const getTwitterData = function () {
     console.log("Grabbling oldest poll...")
     twitter.getMostRecentTweet('areNftsGood').then(data => {
