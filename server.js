@@ -117,7 +117,7 @@ const load = () => {
     secrets.dailyArtPath = "";
 
     if (fs.existsSync(clapPath)) {
-        fs.writeFileSync(clapPath, claps);
+        fs.writeFileSync(clapPath, claps.toString());
     }
     claps = parseInt(fs.readFileSync(clapPath, 'utf8'));
 }
