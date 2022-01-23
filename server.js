@@ -11,6 +11,11 @@ const os = require('os');
 const bodyParser = require("body-parser");
 const nodemailer = require("nodemailer");
 const dns = require('dns');
+const { TwitterApi } = require('twitter-api-v2');
+const Instagram = require('instagram-web-api');
+const esrever = require('esrever');
+const async = require('async');
+const easyimg = require('easyimage');
 
 const publicIp = require('public-ip');
 const { exit } = require('process');
@@ -84,6 +89,8 @@ let secretsPath = path.resolve("./secrets.json");
 if (!localTest) secretsPath = path.resolve("/home/pi/personal-site-server/secrets.json");
 
 //save/load
+let claps = 42;
+let clapPath = path.resolve("./claps.txt");
 const save = () => {
     fs.writeFile(secretsPath, JSON.stringify(secrets), function (err) {
         if (err) {
@@ -91,10 +98,28 @@ const save = () => {
         }
         console.log("Saved data");
     });
+    fs.writeFile(clapPath, claps, function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        console.log("Saved claps");
+    });
 }
 const load = () => {
     secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
     auth = ("admin:" + secrets.password).replace(/[^\x00-\x7F]/g, "").replace(/(\r\n|\n|\r)/gm, "");
+    secrets.ip = "POOP";
+    publicIp.v4().then(ip => {
+        secrets.ip = ip;
+    });
+    secrets.latestArtTwitter = "https://twitter.com/willFarhatDaily";
+    secrets.latestArtInstagram = "https://www.instagram.com/willfarhatdaily/";
+    secrets.dailyArtPath = "";
+
+    if (fs.existsSync(clapPath)) {
+        fs.writeFileSync(clapPath, claps);
+    }
+    claps = parseInt(fs.readFileSync(clapPath, 'utf8'));
 }
 load();
 
@@ -118,10 +143,10 @@ const sendRoot = function (req, res) {
     res.sendFile(reactDir + "/build/index.html");
 }
 reactApp.set('view engine', 'jade');
-reactApp.get('/.well-known/acme-challenge/qjf_Z7xGMsV_3HrIbOBbqIo_P2JVc8hZ8YHaHpx5wEI', function (req, res) {
+reactApp.get('/.well-known/acme-challenge/' + secrets.challengeAKey, function (req, res) {
     res.sendFile('/home/pi/personal-site-server/a-challenge');
 });
-reactApp.get('/.well-known/acme-challenge/JNKPVRgLLlPr6hoz7YZtddhsI_TEs3HnfXgjjv1sM-g', function (req, res) {
+reactApp.get('/.well-known/acme-challenge/' + secrets.challengeBKey, function (req, res) {
     res.sendFile('/home/pi/personal-site-server/b-challenge');
 });
 reactApp.get('/chadmin', (req, res) => sendRoot(req, res));
@@ -264,11 +289,11 @@ apiApp.get('/fileList/*', function (req, res) {
     res.send({ data: fileList });
 });
 apiApp.get('/clap', function (req, res) {
-    res.send({ data: secrets.claps });
+    res.send({ data: claps });
 });
 apiApp.get('/newClap', function (req, res) {
-    secrets.claps++;
-    res.status(200).send({ data: secrets.claps });
+    claps++;
+    res.status(200).send({ data: claps });
 });
 apiApp.get('/art', function (req, res) {
     if (artPath === "") res.status(404).send({ data: false });
@@ -317,11 +342,12 @@ apiApp.use((req, res, next) => {
     if (secrets.alive) deadManSwitch = stillAlive(deadManSwitch);
     return next();
 });
-apiApp.get('/ip', function (req, res) {
-    res.send({ data: IPV4 });
-});
-apiApp.get('/github', function (req, res) {
-    res.send({ data: secrets.github });
+apiApp.get('/secrets/*', function (req, res) {
+    const name = req.path.replace("/secrets/", "");
+    if (!(name in secrets)) {
+        res.status(404).send({ data: false });
+    }
+    res.send({ data: secrets[name] });
 });
 apiApp.get('/chadmin/files/*', function (req, res) {
     const filePath = path.resolve(archiveFilePath + "/private/" + req.path.replace("/chadmin/files/", ""));
@@ -357,7 +383,80 @@ apiApp.post('/upload*', (req, res) => {
             return res.status(200).send({ data: myFile.name });
         }
     });
-})
+});
+const validFormats = [".MP4", ".MOV", ".JPG", ".JPEG", ".PNG", ".BMP"];
+apiApp.post('/dailyArt/upload', (req, res) => {
+    if (!req.files) {
+        return res.status(500).send({ msg: "No file attached" });
+    }
+    const myFile = req.files.file;
+    if (!validFormats.includes(path.extname(myFile.name).toUpperCase())) {
+        return res.status(500).send({ msg: "Invalid file format" });
+    }
+    secrets.dailyArtPath = path.resolve(dayPath, myFile.name);
+    console.log("Daily art: " + secrets.dailyArtPath);
+    myFile.mv(secrets.dailyArtPath, function (err) {
+        if (err) {
+            console.log(err)
+            return res.status(500).send({ msg: "Error occured" });
+        }
+        return res.status(200).send({ data: secrets.dailyArtPath });
+    });
+});
+apiApp.post('/dailyArt/submit', (req, res) => {
+    if (secrets.dailyArtPath === "") res.status(500).send({ data: false });
+    let tags = "#pixeldalies #pixelart #pixelartist #art #8bit #digitalart";
+    let twitterAccounts = "@will_farhat @Pixel_Dailies ";
+    const title = req.body.title.trim();
+    (async () => {
+        secrets.latestArtTwitter = "";
+        secrets.latestArtInstagram = "";
+        async.series([
+            async () => {
+                const tClient = new TwitterApi({
+                    appKey: secrets.dailyTwitter.apiKey,
+                    appSecret: secrets.dailyTwitter.apiKeySecret,
+                    accessToken: secrets.dailyTwitter.accessToken,
+                    accessSecret: secrets.dailyTwitter.accessTokenSecret,
+                }).readWrite;
+                const mediaIds = await Promise.all([
+                    tClient.v1.uploadMedia(secrets.dailyArtPath)
+                ]);
+                let tBody = esrever.reverse(title + "\n" + twitterAccounts + tags);
+                while (tBody.length > 280) {
+                    tBody = tBody.substring(tBody.indexOf(" ") + 1);
+                }
+                tBody = esrever.reverse(tBody);
+                const newTweet = await tClient.v1.tweet(tBody, { media_ids: mediaIds });
+                secrets.latestArtTwitter = "https://twitter.com/willFarhatDaily/status/" + newTweet.id_str;
+            },
+            async () => {
+                let instaPath = secrets.dailyArtPath;
+                let isCopy = false;
+                const pathUpper = instaPath.toUpperCase();
+                if (!pathUpper.includes(".JPG") && !pathUpper.includes(".JPEG")) {
+                    isCopy = true;
+                    const tmp_extless = instaPath.substring(0, instaPath.indexOf(".")) + ".jpg";
+                    await easyimg.convert({ src: instaPath, dst: tmp_extless, quality: 80 });
+                    instaPath = tmp_extless;
+                }
+                const instaCreds = { username: "willfarhatdaily", password: secrets.password };
+                const iClient = new Instagram(instaCreds);
+                await iClient.login(instaCreds);
+                const { media } = await iClient.uploadPhoto({ photo: instaPath, caption: title + "\n" + tags, post: 'feed' }).catch((err) => {
+                    console.log("Instagram error")
+                });
+                if (isCopy) fs.unlink(instaPath, () => console.log("Removed temp file"));
+                secrets.latestArtInstagram = `https://www.instagram.com/p/${media.code}/`;
+            }
+        ], (err, results) => {
+            if (!secrets.latestArtInstagram && !secrets.latestArtTwitter) res.status(221).send();
+            else if (!secrets.latestArtTwitter) res.status(222).send();
+            else if (!secrets.latestArtInstagram) res.status(223).send();
+            else res.status(200).send();
+        });
+    })();
+});
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
 console.log("API app listening on port " + apiPort);
@@ -398,19 +497,18 @@ emotiveApi.get('*', (req, res) => {
 
 //NFTs are bad
 const nftStatusPath = reactDir + "/../are-nfts-good/";
-const twitterAPI = require(path.resolve(nftStatusPath + "/backend/index.js"));
-const twitter = new twitterAPI();
+const twitterNFT = new (require(path.resolve(nftStatusPath + "/backend/index.js")))();
 const hashtags = "\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
-const yesWeight = 1, noWeight = 20000000000000000000000000000000000000;
+const yesWeight = 1, noWeight = 1;
 const getTwitterData = function () {
-    console.log("Grabbling oldest poll...")
-    twitter.getMostRecentTweet('areNftsGood').then(data => {
+    console.log("Grabbling oldest poll...");
+    twitterNFT.getMostRecentTweet('areNftsGood').then(data => {
         nftStatus = (data && data.polls && data.polls.options && data.polls.options.length == 2 && data.polls.options[0].votes * yesWeight > data.polls.options[1].votes * noWeight);
-        twitter.createPoll("Are NFTs Good?" + hashtags, ["Yes", "No"], 1440);
+        twitterNFT.createPoll("Are NFTs Good?" + hashtags, ["Yes", "No"], 1440);
         console.log("Tweeting new poll...");
     });
 }
-const twitterJob = schedule.scheduleJob('0 0 10 * * *', getTwitterData);
+const nftJob = schedule.scheduleJob('0 0 10 * * *', getTwitterData);
 const nftStatusApp = express();
 nftStatusApp.use(cors({
     origin: '*'
