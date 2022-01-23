@@ -91,6 +91,7 @@ if (!localTest) secretsPath = path.resolve("/home/pi/personal-site-server/secret
 //save/load
 let claps = 42;
 let clapPath = path.resolve("./claps.txt");
+if (clapPath == "/claps.txt") clapPath = "/home/pi/personal-site-server/claps.txt";
 const save = () => {
     fs.writeFile(secretsPath, JSON.stringify(secrets), function (err) {
         if (err) {
