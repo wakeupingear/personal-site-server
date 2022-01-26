@@ -346,7 +346,7 @@ apiApp.use((req, res, next) => {
 apiApp.get('/secrets/*', function (req, res) {
     const name = req.path.replace("/secrets/", "");
     if (!(name in secrets)) {
-        res.status(404).send({ data: false });
+        return res.status(404).send({ data: false });
     }
     res.send({ data: secrets[name] });
 });
