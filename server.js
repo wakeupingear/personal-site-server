@@ -137,7 +137,19 @@ const send404 = function (req, res) {
     res.redirect(host + "/404");
 }
 
+const sendSubdomain = function (thisApp,startPath,endpoint) {
+    thisApp.get(startPath, function (req, res) {
+        let file = path.resolve(reactDir + endpoint+"/index.html");
+        res.sendFile(file);
+    });
+    thisApp.get(startPath+"*", function (req, res) {
+        let file = reactDir + endpoint + req.path.substring(req.path.indexOf(startPath) + startPath.length);
+        res.sendFile(path.resolve(file));
+    });
+}
+
 //Frontend setup
+//#region Frontend
 const reactApp = express();
 reactApp.use(express.static(reactDir));
 const sendRoot = function (req, res) {
@@ -171,13 +183,14 @@ reactApp.get('/outset*', function (req, res) {
         res.sendFile(path.resolve(reactDir + "/src/assets/outsetPage/" + endFile));
     }
 });
-reactApp.get('/coding', function (req, res) {
-    res.sendFile(reactDir + "/src/coding/");
-});
-reactApp.get('/coding*', function (req, res) {
-    let file = reactDir + "/src/coding/" + req.path.substring(req.path.indexOf("/coding") + 7);
-    res.sendFile(file);
-});
+
+//coding site
+sendSubdomain(reactApp,"/coding","/src/coding");
+
+//writeus
+sendSubdomain(reactApp,"/writus","/../hacksc-22");
+
+//links
 reactApp.get('/youtube', function (req, res) { res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw'); });
 reactApp.get('/linkedin', function (req, res) { res.redirect('https://www.linkedin.com/in/will-farhat'); });
 reactApp.get('/github', function (req, res) { res.redirect('https://github.com/willf668/'); });
@@ -185,7 +198,7 @@ reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/w
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
 reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
 const pages = new Set();
-["inc", "outset", "emotive", "jam", "research", "youtube", "thk", "cfe", "remotion", "freehand"].forEach(pages.add, pages);
+["inc", "outset", "emotive", "jam", "research", "youtube", "thk", "cfe", "remotion", "freehand", "writus"].forEach(pages.add, pages);
 reactApp.get('*', function (req, res) {
     if (req.path == "/404") {
         res.sendFile(path.resolve(reactDir + "/public/404.html"));
@@ -203,8 +216,10 @@ reactApp.get('*', function (req, res) {
 if (!localTest) https.createServer(siteOptions, reactApp).listen(sitePort);
 else reactApp.listen(sitePort);
 console.log("React app listening on port " + sitePort);
+//#endregion
 
 //Dead man's switch
+//#region Death
 function stillAlive(existingTimeout) {
     if (existingTimeout !== undefined) clearTimeout(existingTimeout);
     return setTimeout(() => {
@@ -257,8 +272,10 @@ function stillAlive(existingTimeout) {
     }, 1209600000);
 }
 let deadManSwitch = stillAlive(undefined);
+//#endregion
 
 //API
+//#region API
 const apiApp = express();
 apiApp.use(cors({
     origin: '*'
@@ -358,12 +375,14 @@ apiApp.get('/chadmin/files/*', function (req, res) {
 //Contacts
 let contactPath = path.resolve("./contactsInfo.json");
 if (contactPath == "/contactsInfo.json") contactPath = path.resolve("/home/pi/personal-site-server/contactsInfo.json");
-const contacts = new Indexer(contactPath);
-apiApp.get('/contacts/search/*', function (req, res) {
-    const query = req.path.replace('/contacts/search/', '').replace(/%20/g, " ").trim();
-    const results = contacts.search(query);
-    res.send({ data: results });
-});
+if (fs.existsSync(contactPath)) {
+    const contacts = new Indexer(contactPath);
+    apiApp.get('/contacts/search/*', function (req, res) {
+        const query = req.path.replace('/contacts/search/', '').replace(/%20/g, " ").trim();
+        const results = contacts.search(query);
+        res.send({ data: results });
+    });
+}
 //File uploading
 apiApp.post('/upload*', (req, res) => {
     if (!req.files) {
@@ -461,6 +480,7 @@ apiApp.post('/dailyArt/submit', (req, res) => {
 if (!localTest) https.createServer(apiOptions, apiApp).listen(apiPort);
 else apiApp.listen(apiPort);
 console.log("API app listening on port " + apiPort);
+//#endregion
 
 
 //Emotive
@@ -497,6 +517,7 @@ emotiveApi.get('*', (req, res) => {
 //#endregion
 
 //NFTs are bad
+//#region NFTs
 const nftStatusPath = reactDir + "/../are-nfts-good/";
 const twitterNFT = new (require(path.resolve(nftStatusPath + "/backend/index.js")))();
 const hashtags = "\n#nfts #nft #nftart #nftartist #nftcollector #cryptoart #digitalart #nftcommunity #art #crypto #ethereum #blockchain #cryptocurrency #cryptoartist #opensea #nftcollectors #bitcoin #nftdrop #nftcollectibles #artist #d #eth #openseanft #nftartists #artwork";
@@ -521,3 +542,4 @@ nftStatusApp.get('*', (req, res) => {
 nftStatusApp.set('port', 2496);
 nftStatusApp.listen(nftStatusApp.get('port'));
 console.log("NFT STATUS listening on port " + nftStatusApp.get('port'));
+//#endregion
