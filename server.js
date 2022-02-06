@@ -66,17 +66,6 @@ try {
     console.error(err);
 }
 
-if (!localTest) {
-    const restartJob = schedule.scheduleJob('0 0 3 * * *', function () {
-        console.log("Restarting...");
-        process.exit(0);
-    });
-    const saveJob = schedule.scheduleJob('0 0 * * * *', function () {
-        console.log("Saving...");
-        saveData();
-    });
-}
-
 //Memory logging
 const memProfile = schedule.scheduleJob('*/10 * * * *', function () {
     console.log("Memory usage: " + process.memoryUsage().heapUsed / 1024 / 1024 + "MB");
@@ -113,6 +102,7 @@ const load = () => {
     publicIp.v4().then(ip => {
         secrets.ip = ip;
     });
+    if (!"writusViews" in secrets) secrets.writusViews = 0;
     secrets.latestArtTwitter = "https://twitter.com/willFarhatDaily";
     secrets.latestArtInstagram = "https://www.instagram.com/willfarhatdaily/";
     secrets.dailyArtPath = "";
@@ -123,6 +113,17 @@ const load = () => {
     claps = parseInt(fs.readFileSync(clapPath, 'utf8'));
 }
 load();
+
+if (!localTest) {
+    const restartJob = schedule.scheduleJob('0 0 3 * * *', function () {
+        console.log("Restarting...");
+        process.exit(0);
+    });
+    const saveJob = schedule.scheduleJob('0 0 * * * *', function () {
+        console.log("Saving...");
+        save();
+    });
+}
 
 //Directory setup
 let reactDir = process.argv[2];
@@ -137,8 +138,9 @@ const send404 = function (req, res) {
     res.redirect(host + "/404");
 }
 
-const sendSubdomain = function (thisApp,startPath,endpoint) {
+const sendSubdomain = function (thisApp,startPath,endpoint,secretCounter="") {
     thisApp.get(startPath, function (req, res) {
+        if (secretCounter !== "") secrets[secretCounter]++;
         let file = path.resolve(reactDir + endpoint+"/index.html");
         res.sendFile(file);
     });
@@ -188,7 +190,7 @@ reactApp.get('/outset*', function (req, res) {
 sendSubdomain(reactApp,"/coding","/src/coding");
 
 //writeus
-sendSubdomain(reactApp,"/writus","/../hacksc-22");
+sendSubdomain(reactApp,"/writus","/../hacksc-22","writusViews");
 
 //links
 reactApp.get('/youtube', function (req, res) { res.redirect('https://www.youtube.com/channel/UCImSybcXB8pCtulA-_T0WCw'); });
