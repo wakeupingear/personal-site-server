@@ -82,18 +82,13 @@ let claps = 42;
 let clapPath = path.resolve("./claps.txt");
 if (clapPath == "/claps.txt") clapPath = "/home/pi/personal-site-server/claps.txt";
 const save = () => {
-    fs.writeFile(secretsPath, JSON.stringify(secrets), function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("Saved data");
-    });
-    fs.writeFile(clapPath, claps, function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("Saved claps");
-    });
+    const secretString = JSON.stringify(secrets);
+    try {
+        fs.writeFileSync(secretsPath, secretString);
+        console.log("Saved");
+    } catch (err) {
+        console.log('Error writing Metadata.json:' + err.message)
+    }
 }
 const load = () => {
     secrets = JSON.parse(fs.readFileSync(secretsPath, 'utf8'));
