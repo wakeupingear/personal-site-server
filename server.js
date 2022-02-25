@@ -184,6 +184,9 @@ reactApp.get('/outset*', function (req, res) {
 //coding site
 sendSubdomain(reactApp,"/coding","/src/coding");
 
+//488 game
+sendSubdomain(reactApp,"/neighborhood","../488-solo-game")
+
 //writeus
 sendSubdomain(reactApp,"/writus","/../hacksc-22","writusViews");
 
