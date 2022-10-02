@@ -97,7 +97,7 @@ const load = () => {
     publicIp.v4().then(ip => {
         secrets.ip = ip;
     });
-    if (!"writusViews" in secrets) secrets.writusViews = 0;
+    if (!("writusViews" in secrets)) secrets.writusViews = 0;
     secrets.latestArtTwitter = "https://twitter.com/willFarhatDaily";
     secrets.latestArtInstagram = "https://www.instagram.com/willfarhatdaily/";
     secrets.dailyArtPath = "";
@@ -114,7 +114,7 @@ if (!localTest) {
         console.log("Restarting...");
         process.exit(0);
     });
-    const saveJob = schedule.scheduleJob('0 0 * * * *', function () {
+    const saveJob = schedule.scheduleJob('0 * * * * *', function () {
         console.log("Saving...");
         save();
     });
@@ -183,6 +183,9 @@ reactApp.get('/outset*', function (req, res) {
 
 //coding site
 sendSubdomain(reactApp,"/coding","/src/coding");
+
+//488 game
+sendSubdomain(reactApp,"/neighborhood","../488-solo-game")
 
 //writeus
 sendSubdomain(reactApp,"/writus","/../hacksc-22","writusViews");
