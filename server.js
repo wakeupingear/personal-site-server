@@ -194,8 +194,9 @@ reactApp.get('/github', function (req, res) { res.redirect('https://github.com/w
 reactApp.get('/resume', function (req, res) { res.redirect('https://github.com/willf668/resume/raw/main/WillFarhatResume.pdf'); });
 reactApp.get('/twitter', function (req, res) { res.redirect('https://twitter.com/will_farhat'); });
 reactApp.get('/instagram', function (req, res) { res.redirect('https://www.instagram.com/will_farhat/'); });
+reactApp.get('/itch', function (req, res) { res.redirect('https://willf668.itch.io'); });
 const pages = new Set();
-["inc", "outset", "emotive", "jam", "research", "youtube", "thk", "cfe", "remotion", "freehand", "writus"].forEach(pages.add, pages);
+["inc", "outset", "emotive", "jam", "research", "youtube", "thk", "cfe", "remotion", "freehand", "writus", "companion"].forEach(pages.add, pages);
 reactApp.get('*', function (req, res) {
     if (req.path == "/404") {
         res.sendFile(path.resolve(reactDir + "/public/404.html"));
